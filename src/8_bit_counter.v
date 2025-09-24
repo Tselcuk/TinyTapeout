@@ -1,4 +1,4 @@
-module top_module (
+module sync_counter (
     input  wire        clk,
     input  wire        reset,          // Synchronous active-high reset
     input  wire        parallel_load,  // Load enable
