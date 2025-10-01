@@ -1,6 +1,6 @@
 module counter8bit_tristate (
     input  wire        clk,
-    input  wire        reset,          // Synchronous active-high reset
+    input  wire        reset,          // Asynchronous active-high reset
     input  wire        parallel_load,  // Load enable
     input  wire [7:0]  data_in,        // Data to load in parallel
     input  wire        out_enable,     // Tri-state output enable
@@ -10,7 +10,8 @@ module counter8bit_tristate (
     // Internal 8-bit counter
     reg [7:0] q;
 
-    always @(posedge clk) begin
+    // asynchronous reset, synchronous load
+    always @(posedge clk or posedge reset) begin
         if (reset)
             q <= 8'b0;                 // Reset
         else if (parallel_load)
