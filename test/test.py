@@ -42,13 +42,10 @@ async def test_counter_reset_increment_load_tristate(dut):
     dut.uio_in.value = 0xA5
     dut.ui_in.value = 0b0000_0011  # out_enable=1, parallel_load=1
     await RisingEdge(dut.clk)
-    # Hold parallel_load for one full cycle to be safe
-    await RisingEdge(dut.clk)
-    # Deassert parallel_load, keep out_enable
+    # Deassert parallel_load immediately after the load clock edge
     dut.ui_in.value = 0b0000_0010
-    # Check on next edge to observe loaded value
     await RisingEdge(dut.clk)
-    assert int(dut.uo_out.value) == 0xA5, "Counter should load 0xA5"
+    assert int(dut.uo_out.value) == 0xA5, "Counter should hold 0xA5 after load"
 
     # Verify it increments from loaded value
     await ClockCycles(dut.clk, 3)
