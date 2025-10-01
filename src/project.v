@@ -16,12 +16,41 @@ module tt_um_example (
     input  wire       rst_n     // reset_n - low to reset
 );
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+  // ui_in bit map:
+  // ui_in[0] = parallel_load
+  // ui_in[1] = out_enable
+  // ui_in[7:2] = reserved for future use
+
+  wire parallel_load = ui_in[0];
+  wire out_enable    = ui_in[1];
+
+  // Adapt TT active-low reset to our module's active-high reset
+  wire reset = ~rst_n;
+
+  // Wires to observe the internal count even when tri-stated on pads
+  wire [7:0] q_bus_internal;
+
+  // Instantiate your counter
+  counter8bit_tristate u_cnt (
+      .clk(clk),
+      .reset(reset),                // active high
+      .parallel_load(parallel_load),
+      .data_in(uio_in),             // load value comes from uio_in[7:0]
+      .out_enable(out_enable),      // controls tri-state behavior
+      .q_bus(q_bus_internal)        // internal view of the tri-state bus
+  );
+
+  // Drive the bidirectional user IO pads with tri-state
+  // TT expects uio_out to carry data and uio_oe to control the pad driver (1=drive)
+  assign uio_out = q_bus_internal;
+  assign uio_oe  = {8{out_enable}};
+
+  // Also mirror the count on the dedicated outputs so you can see it even when tri-stated
+  assign uo_out  = q_bus_internal;
 
   // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+  wire _unused = &{ena, 1'b0};
 
 endmodule
+
+`default_nettype wire
