@@ -1,0 +1,47 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*]
+[dumpfile] "/Users/joshz/repos/TinyTapeout/test/gatelevel_test_vcd/tb.vcd"
+[timestart] 0
+[size] 1920 1080
+[pos] -1 -1
+*-3.0 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[treeopen] tb.user_project.
+[sst_width] 300
+[signals_width] 250
+[sst_expanded] 1
+[sst_vpaned_height] 300
+@28
+tb.clk
+tb.rst_n
+tb.ena
+@200
+-Inputs
+@22
+tb.ui_in[7:0]
+@200
+-Bidirectional Pins
+@22
+tb.uio_in[7:0]
+tb.uio_oe[7:0]
+tb.uio_out[7:0]
+@200
+-Outputs
+@22
+tb.uo_out[7:0]
+@200
+-Internal Counter State (Gate-Level)
+@22
+[color] 2
+tb.user_project.\u_cnt.q[7]
+tb.user_project.\u_cnt.q[6]
+tb.user_project.\u_cnt.q[5]
+tb.user_project.\u_cnt.q[4]
+tb.user_project.\u_cnt.q[3]
+tb.user_project.\u_cnt.q[2]
+tb.user_project.\u_cnt.q[1]
+tb.user_project.\u_cnt.q[0]
+[pattern_trace] 1
+[pattern_trace] 0
+
