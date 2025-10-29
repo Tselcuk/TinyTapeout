@@ -116,14 +116,11 @@ module tt_um_watpixels (
   );
 
   emblem_gen u_emblem_gen (
-      .clk       (clk),
-      .rst       (rst),
-      .x         (x_pos),
-      .y         (y_pos),
-      .active    (active),
-      .next_frame(next_frame),
-      .draw      (emblem_draw),
-      .rgb       (emblem_rgb)
+      .x      (x_pos),
+      .y      (y_pos),
+      .active (active),
+      .draw   (emblem_draw),
+      .rgb    (emblem_rgb)
   );
 
   text_gen u_text_gen (

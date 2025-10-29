@@ -318,6 +318,4 @@ module text_gen (
         end
     endfunction
 
-    wire _unused_inputs = |{clk, rst, next_frame};
-
 endmodule

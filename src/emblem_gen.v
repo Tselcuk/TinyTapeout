@@ -4,12 +4,9 @@
  * background and the text foreground layers.
  */
 module emblem_gen (
-    input  wire       clk,
-    input  wire       rst,
     input  wire [9:0] x,
     input  wire [9:0] y,
     input  wire       active,
-    input  wire       next_frame,
     output reg        draw,
     output reg  [5:0] rgb
 );
@@ -195,7 +192,5 @@ module emblem_gen (
     always @(*) begin
         rgb = {color_sel[5], color_sel[3], color_sel[1], color_sel[4], color_sel[2], color_sel[0]};
     end
-
-    wire _unused_inputs = |{clk, rst, next_frame};
 
 endmodule
