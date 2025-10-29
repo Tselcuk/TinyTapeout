@@ -13,3 +13,7 @@ test/gate_level_netlist.v
 # Local Python virtualenv
 .venv/
 venv/
+env/
+
+
+obj_dir/
