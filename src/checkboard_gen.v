@@ -40,13 +40,7 @@ module checkboard_gen (
     wire       tile_select = shifted_x[4] ^ y[4];
 
     always @(*) begin
-        if (!active) begin
-            rgb = 6'b000000;
-        end else if (tile_select) begin
-            rgb = 6'b110000; // bright red
-        end else begin
-            rgb = 6'b000000; // black
-        end
+        rgb = (active && tile_select) ? 6'b100100 : 6'b000000;
     end
 
     wire _unused = |{x[9:5], y[9:5]};
