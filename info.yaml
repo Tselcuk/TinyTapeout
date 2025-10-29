@@ -18,11 +18,10 @@ project:
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "project.v"
-    - "watpixels_top.v"
     - "vga_timing.v"
     - "speed_controller.v"
     - "pattern_selector.v"
-    - "checkboard_gen_2.v"
+    - "checkboard_gen.v"
     - "radient_gradient.v"
     - "emblem_gen.v"
     - "text_gen.v"
