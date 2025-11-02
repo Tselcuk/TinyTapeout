@@ -31,17 +31,18 @@ module tt_um_watpixels (
 
   // Convert speed inputs to a single speed value
   wire [2:0] speed;
-  assign speed = speed_6 ? 3'd6 :
-                 speed_5 ? 3'd5 :
-                 speed_4 ? 3'd4 :
-                 speed_3 ? 3'd3 :
-                 speed_2 ? 3'd2 :
-                 speed_1 ? 3'd1 : 3'd3; // Default to speed 3
+  assign speed = speed_6 ? 6 :
+                 speed_5 ? 5 :
+                 speed_4 ? 4 :
+                 speed_3 ? 3 :
+                 speed_2 ? 2 :
+                 speed_1 ? 1 : 3; // Default to speed 3
 
   // VGA Timing Signals
   wire hsync;
   wire vsync;
   wire active;
+  wire frame_start;
   wire [9:0] x_pos;
   wire [9:0] y_pos;
 
@@ -52,56 +53,41 @@ module tt_um_watpixels (
 
   // Pattern Output
   wire [5:0] pattern_rgb;
+  wire [1:0] pattern_select;
   wire next_frame;
-  localparam [1:0] PATTERN_CHECKERBOARD = 2'd0;
-  localparam [1:0] PATTERN_RADIENT      = 2'd1;
-  localparam [7:0] FRAMES_PER_PATTERN   = 8'd240;
-  reg  [1:0] pattern_select;
-  reg  [7:0] frame_counter;
+  wire [11:0] step_size;
+  wire _unused_pattern_select = |pattern_select;
 
-  // Overlay layers
-  wire       emblem_draw;
-  wire [5:0] emblem_rgb;
-  wire       text_draw;
-  wire [5:0] text_rgb;
+  // Overlay layers (temporarily disabled)
+  // wire       emblem_draw;
+  // wire [5:0] emblem_rgb;
+  // wire       text_draw;
+  // wire [5:0] text_rgb;
   reg  [5:0] final_rgb;
 
   // Instantiate VGA Timing Generator
   vga_timing u_vga_timing (
-      .clk   (clk),
-      .rst   (rst),
-      .hsync (hsync),
-      .vsync (vsync),
-      .active(active),
-      .x     (x_pos),
-      .y     (y_pos)
+      .clk        (clk),
+      .rst        (rst),
+      .hsync      (hsync),
+      .vsync      (vsync),
+      .active     (active),
+      .frame_start(frame_start),
+      .x          (x_pos),
+      .y          (y_pos)
   );
 
   // Instantiate Speed Controller -> emits next_frame pulse
   speed_controller u_speed_controller (
-      .clk       (clk),
-      .rst       (rst),
-      .speed     ({5'b0, speed}),
-      .pause     (pause),
-      .resume    (resume),
-      .next_frame(next_frame)
+      .clk        (clk),
+      .rst        (rst),
+      .speed      (speed),
+      .pause      (pause),
+      .resume     (resume),
+      .frame_start(frame_start),
+      .next_frame (next_frame),
+      .step_size  (step_size)
   );
-
-  // Alternate patterns every FRAMES_PER_PATTERN frame requests.
-  always @(posedge clk or posedge rst) begin
-    if (rst) begin
-      frame_counter  <= 8'd0;
-      pattern_select <= PATTERN_CHECKERBOARD;
-    end else if (next_frame) begin
-      if (frame_counter == FRAMES_PER_PATTERN - 8'd1) begin
-        frame_counter  <= 8'd0;
-        pattern_select <= (pattern_select == PATTERN_CHECKERBOARD) ? PATTERN_RADIENT
-                                                                   : PATTERN_CHECKERBOARD;
-      end else begin
-        frame_counter <= frame_counter + 8'd1;
-      end
-    end
-  end
 
   // Instantiate Pattern Selector -> routes to the desired pattern module
   pattern_selector u_pattern_selector (
@@ -110,38 +96,42 @@ module tt_um_watpixels (
       .x             (x_pos),
       .y             (y_pos),
       .active        (active),
+      .vsync         (vsync),
       .next_frame    (next_frame),
+      .step_size     (step_size),
       .pattern_select(pattern_select),
       .rgb           (pattern_rgb)
   );
 
-  emblem_gen u_emblem_gen (
-      .x      (x_pos),
-      .y      (y_pos),
-      .active (active),
-      .draw   (emblem_draw),
-      .rgb    (emblem_rgb)
-  );
+  // Temporarily disabled overlays
+  // emblem_gen u_emblem_gen (
+  //     .x      (x_pos),
+  //     .y      (y_pos),
+  //     .active (active),
+  //     .draw   (emblem_draw),
+  //     .rgb    (emblem_rgb)
+  // );
 
-  text_gen u_text_gen (
-      .clk       (clk),
-      .rst       (rst),
-      .x         (x_pos),
-      .y         (y_pos),
-      .active    (active),
-      .next_frame(next_frame),
-      .draw      (text_draw),
-      .rgb       (text_rgb)
-  );
+  // text_gen u_text_gen (
+  //     .clk       (clk),
+  //     .rst       (rst),
+  //     .x         (x_pos),
+  //     .y         (y_pos),
+  //     .active    (active),
+  //     .next_frame(next_frame),
+  //     .draw      (text_draw),
+  //     .rgb       (text_rgb)
+  // );
 
   always @(*) begin
     final_rgb = pattern_rgb;
-    if (emblem_draw) begin
-      final_rgb = emblem_rgb;
-    end
-    if (text_draw) begin
-      final_rgb = text_rgb;
-    end
+    // Temporarily disabled overlay rendering
+    // if (emblem_draw) begin
+    //   final_rgb = emblem_rgb;
+    // end
+    // if (text_draw) begin
+    //   final_rgb = text_rgb;
+    // end
   end
 
   // Output Signal Mapping
@@ -155,8 +145,8 @@ module tt_um_watpixels (
   assign uo_out[7] = final_rgb[5]; // R[1]
 
   // Bidirectional IOs
-  assign uio_out = 8'b0; // Not used
-  assign uio_oe  = 8'b0; // All bidirectional pins are inputs
+  assign uio_out = 0; // Not used
+  assign uio_oe  = 0; // All bidirectional pins are inputs
 
 endmodule
 

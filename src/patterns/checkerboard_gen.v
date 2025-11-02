@@ -1,38 +1,39 @@
+// Checkerboard pattern; advances with a fixed-point step provided by speed_controller.
 module checkerboard_gen (
     input wire clk,
     input wire rst,
+    input wire pattern_enable,
     input wire [9:0] x,
     input wire [9:0] y,
     input wire active,
     input wire next_frame,
+    input wire [11:0] step_size,
     output reg [5:0] rgb
 );
 
-    // Track queued frame advances so we apply offset changes only on frame boundaries.
     reg [7:0] frame_offset;
-    reg [3:0] pending_frames; // Using pending_frames prevents screen tearing
+    reg [3:0] subpixel_accum;
+
+    wire [4:0] frac_sum = {1'b0, subpixel_accum} + {1'b0, step_size[3:0]};
+    wire [8:0] offset_sum = {1'b0, frame_offset}
+                          + {1'b0, step_size[11:4]}
+                          + {{8{1'b0}}, frac_sum[4]};
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            frame_offset <= 0;
-            pending_frames <= 0;
-        end else begin
-            if (next_frame && (pending_frames != 15)) begin
-                pending_frames <= pending_frames + 1;
-            end
-
-            if ((x == 0) && (y == 0) && (pending_frames != 0)) begin
-                frame_offset <= frame_offset + 1;
-                pending_frames <= pending_frames - 1;
-            end
+            frame_offset   <= 0;
+            subpixel_accum <= 0;
+        end else if (pattern_enable && next_frame) begin
+            frame_offset   <= offset_sum[7:0];
+            subpixel_accum <= frac_sum[3:0];
         end
     end
 
-    wire [9:0] shifted_x = x + (frame_offset << 2); // This shifts the x coordinate by the frame offset (multiplied by 4), we multiply by 4 else each frame would only move by 1 pixel which would be very slow
-    wire tile_select = shifted_x[4] ^ y[4]; // This is the bit that actually creates the checkerboard pattern
+    wire [9:0] shifted_x = x + {frame_offset, 1'b0}; // This shifts the x coordinate by the frame offset and is what creates the movement of the pattern
+    wire tile_select = shifted_x[5] ^ y[5]; // This is the part that actually creates the checkerboard pattern
 
     always @(*) begin
-        rgb = (active && tile_select) ? 6'b100100 : 6'b000000; // This is the color of the checkerboard pattern, red and black
+        rgb = (active && tile_select) ? 6'b100100 : 6'b000000;
     end
 
 endmodule
