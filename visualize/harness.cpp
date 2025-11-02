@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 #include <verilated.h>
 #include <Vtt_um_watpixels.h>

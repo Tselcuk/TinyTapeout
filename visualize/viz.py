@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -10,17 +11,19 @@ class VerilatorVisualizer:
         self.workspace = Path(tempfile.mkdtemp(prefix="tt_vga_verilator_"))
         self.build_dir = self.workspace / "obj_dir"
         self.frames_dir = self.workspace / "frames"
+        self.job_count = max(4, os.cpu_count() or 1)
 
         repo_root = Path(__file__).resolve().parents[1]
         source_dir = repo_root / "src"
-        self.source_files = sorted(source_dir.glob("*.v"))
+        self.source_files = sorted(source_dir.rglob("*.v"))
 
     def run(self):
         self.frames_dir.mkdir(parents=True, exist_ok=True)
 
         subprocess.run(
             [
-                "verilator", "--cc", "--exe", "--build", "-j", "0",
+                "verilator", "--cc", "--exe", "--build",
+                "-j", str(self.job_count),
                 "--top-module", "tt_um_watpixels", "-o", "vga_sim",
                 str(Path(__file__).parent / "harness.cpp"),
                 *map(str, self.source_files),
