@@ -29,7 +29,7 @@ module pattern_selector (
     wire [5:0] checkboard_rgb;
     wire [5:0] radient_rgb;
 
-    checkboard_gen u_checkboard_gen(
+    checkerboard_gen u_checkerboard_gen(
         .clk(clk),
         .rst(rst),
         .x(x),

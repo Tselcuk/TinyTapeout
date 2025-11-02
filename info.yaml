@@ -18,13 +18,13 @@ project:
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "project.v"
-    - "vga_timing.v"
-    - "speed_controller.v"
-    - "pattern_selector.v"
-    - "checkboard_gen.v"
-    - "radient_gradient.v"
-    - "emblem_gen.v"
-    - "text_gen.v"
+    - "core/vga_timing.v"
+    - "core/speed_controller.v"
+    - "patterns/pattern_selector.v"
+    - "patterns/checkerboard_gen.v"
+    - "patterns/radient_gradient.v"
+    - "overlays/emblem_gen.v"
+    - "overlays/text_gen.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).

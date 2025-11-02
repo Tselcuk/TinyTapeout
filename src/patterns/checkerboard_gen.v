@@ -4,7 +4,7 @@
  * the shared frame advance handshake. Designed as a lightweight alternative
  * to the original layered checkerboard implementation.
  */
-module checkboard_gen (
+module checkerboard_gen (
     input  wire clk,
     input  wire rst,
     input  wire [9:0] x,
