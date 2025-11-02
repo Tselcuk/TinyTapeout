@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-"""
-Verilator-powered VGA visualiser for the TinyTapeout WatPixels design.
-
-The script Verilates the RTL, clocks the design frame by frame, and captures the
-RGB output directly without generating a VCD. Frames are written as PPM images
-and combined into an animated GIF. All configuration is hardcoded for 640x480@60Hz.
-"""
-
 import subprocess
 import tempfile
 from pathlib import Path
@@ -55,4 +46,3 @@ class VerilatorVisualizer:
 
 if __name__ == "__main__":
     VerilatorVisualizer().run()
-
