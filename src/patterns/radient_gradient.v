@@ -1,19 +1,13 @@
-/* Radient Gradient Pattern Generator
- *
- * Creates an expanding magenta-to-navy radial gradient that pulses outward
- * from the frame centre. Each 60 Hz frame receives a single next_frame tick
- * along with a fixed-point step_size that controls the amount of motion.
- */
 module radient_gradient (
-    input  wire       clk,
-    input  wire       rst,
-    input  wire       pattern_enable,
-    input  wire [9:0] x,
-    input  wire [9:0] y,
-    input  wire       active,
-    input  wire       next_frame,
-    input  wire [11:0] step_size,
-    output reg  [5:0] rgb
+    input wire clk,
+    input wire rst,
+    input wire pattern_enable,
+    input wire [9:0] x,
+    input wire [9:0] y,
+    input wire active,
+    input wire next_frame,
+    input wire [11:0] step_size,
+    output reg [5:0] rgb
 );
 
     reg [9:0] frame_counter;
@@ -40,74 +34,52 @@ module radient_gradient (
     wire signed [10:0] sx = $signed({1'b0, x}) - $signed({1'b0, CENTER_X});
     wire signed [10:0] sy = $signed({1'b0, y}) - $signed({1'b0, CENTER_Y});
 
-    wire [10:0] abs_dx = sx[10] ? (~sx + 1) : sx[10:0];
-    wire [10:0] abs_dy = sy[10] ? (~sy + 1) : sy[10:0];
+    wire [21:0] dx_sq = sx * sx;
+    wire [21:0] dy_sq = sy * sy;
+    wire [22:0] distance_sq = dx_sq + dy_sq;
 
-    wire [10:0] max_xy = (abs_dx > abs_dy) ? abs_dx : abs_dy;
-    wire [10:0] min_xy = (abs_dx > abs_dy) ? abs_dy : abs_dx;
+    wire [7:0] base_radius = 30 + frame_counter[7:1]; // This is what expands the pattern outwards
 
-    wire [11:0] approx_dist = {1'b0, max_xy} + {1'b0, (min_xy >> 1)};
-    wire [7:0] distance_scaled = approx_dist[9:2]; // Divide by 4 for broader range
+    // Concentric ring radii (inner to outer)
+    wire [7:0] ring1_radius = (base_radius > 24) ? (base_radius - 24) : 0;
+    wire [7:0] ring2_radius = base_radius + 24;
+    wire [7:0] ring3_radius = base_radius + 48;
+    wire [7:0] ring4_radius = base_radius + 72;
+    wire [7:0] ring5_radius = base_radius + 96;
 
-    // Generate a triangular wave radius: expand then gently contract.
-    wire [7:0] radius_phase = frame_counter[9:2]; // Slow animation
-    wire [7:0] radius_cycle = (radius_phase < 120) ?
-                              radius_phase :
-                              (239 - radius_phase);
-    wire [7:0] base_radius = 30 + radius_cycle; // 30 .. 150 pixels
+    wire [15:0] ring1_radius_sq = ring1_radius * ring1_radius;
+    wire [15:0] ring2_radius_sq = ring2_radius * ring2_radius;
+    wire [15:0] ring3_radius_sq = ring3_radius * ring3_radius;
+    wire [15:0] ring4_radius_sq = ring4_radius * ring4_radius;
+    wire [15:0] ring5_radius_sq = ring5_radius * ring5_radius;
 
-    wire [7:0] core_limit = (base_radius > 15) ? (base_radius - 15) : 0;
-    wire [7:0] glow_limit = base_radius + 12;
-    wire [7:0] inner_limit = base_radius + 30;
-    wire [7:0] outer_limit = base_radius + 50;
-    wire [7:0] halo_limit = base_radius + 80;
-
-    reg [1:0] red_level;
-    reg [1:0] blue_level;
-    reg [5:0] color_sel;
+    // Predefined RGB values in output bit order {R[1], G[1], B[1], R[0], G[0], B[0]}
+    localparam [5:0] NAVY_EDGE = 6'b000001;
+    localparam [5:0] MAGENTA_CORE = 6'b101101;
+    localparam [5:0] MAGENTA_GLOW = 6'b101100;
+    localparam [5:0] MAGENTA_INNER_RING = 6'b101000;
+    localparam [5:0] MAGENTA_OUTER_RING = 6'b001100;
+    localparam [5:0] BLUE_HALO = 6'b001000;
 
     always @(*) begin
-        color_sel  = 6'b000000;
-        red_level  = 0;
-        blue_level = 0;
+        rgb = 6'b000000;
 
         if (active) begin
             // Default to a deep navy edge.
-            red_level  = 0;
-            blue_level = 1;
+            rgb = NAVY_EDGE;
 
-            if (distance_scaled <= core_limit) begin
-                red_level  = 3;
-                blue_level = 3;
-            end else if (distance_scaled <= glow_limit) begin
-                red_level  = 3;
-                blue_level = 2;
-            end else if (distance_scaled <= inner_limit) begin
-                red_level  = 2;
-                blue_level = 2;
-            end else if (distance_scaled <= outer_limit) begin
-                red_level  = 1;
-                blue_level = 2;
-            end else if (distance_scaled <= halo_limit) begin
-                red_level  = 0;
-                blue_level = 2;
+            if (distance_sq <= {7'd0, ring1_radius_sq}) begin
+                rgb = MAGENTA_CORE;
+            end else if (distance_sq <= {7'd0, ring2_radius_sq}) begin
+                rgb = MAGENTA_GLOW;
+            end else if (distance_sq <= {7'd0, ring3_radius_sq}) begin
+                rgb = MAGENTA_INNER_RING;
+            end else if (distance_sq <= {7'd0, ring4_radius_sq}) begin
+                rgb = MAGENTA_OUTER_RING;
+            end else if (distance_sq <= {7'd0, ring5_radius_sq}) begin
+                rgb = BLUE_HALO;
             end
-
-            color_sel = {red_level, 2'b00, blue_level};
         end
     end
-
-    always @(*) begin
-        rgb = {
-            color_sel[5],
-            color_sel[3],
-            color_sel[1],
-            color_sel[4],
-            color_sel[2],
-            color_sel[0]
-        };
-    end
-
-    wire _unused_inputs = |{abs_dx[10], abs_dy[10]};
 
 endmodule

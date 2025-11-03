@@ -13,19 +13,19 @@ module pattern_selector (
 );
     localparam [1:0] PATTERN_CHECKERBOARD = 0;
     localparam [1:0] PATTERN_RADIENT = 1;
-    localparam [7:0] FRAMES_CHECKERBOARD = 240;
-    localparam [7:0] FRAMES_RADIENT = 240;
+    localparam [9:0] FRAMES_CHECKERBOARD = 240;
+    localparam [9:0] FRAMES_RADIENT = 480;
     localparam [1:0] PATTERN_LAST = PATTERN_RADIENT;
 
     reg switch_pending;
-    reg [7:0] frame_counter;
+    reg [9:0] frame_counter;
 
     wire [5:0] checkboard_rgb;
     wire [5:0] radient_rgb;
 
     wire checkerboard_selected = (pattern_select == PATTERN_CHECKERBOARD);
     wire radient_selected = (pattern_select == PATTERN_RADIENT);
-    wire [7:0] frames_for_current_pattern = (pattern_select == PATTERN_CHECKERBOARD) ? FRAMES_CHECKERBOARD : FRAMES_RADIENT;
+    wire [9:0] frames_for_current_pattern = (pattern_select == PATTERN_CHECKERBOARD) ? FRAMES_CHECKERBOARD : FRAMES_RADIENT;
 
     // Track VGA frame advances and defer pattern switches to the next frame origin.
     // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse)
