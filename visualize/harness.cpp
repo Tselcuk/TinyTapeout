@@ -1,8 +1,5 @@
 #include <cstdint>
-#include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -15,9 +12,8 @@ struct Config {
     static constexpr int V_VISIBLE = 480;
     static constexpr int H_TOTAL = 800;
     static constexpr int V_TOTAL = 525;
-    static constexpr int FRAMES = 680;
-    static constexpr int MODE = 3;
-    static constexpr const char* OUTPUT_DIR = "frames";
+    static constexpr int FRAMES = 800;
+    static constexpr int MODE = 2;
 };
 
 uint8_t compute_ui(int mode, bool force_resume) {
@@ -31,14 +27,10 @@ uint8_t compute_ui(int mode, bool force_resume) {
     return ui;
 }
 
-bool write_frame(int index, const std::vector<uint8_t>& data) {
-    std::ostringstream path;
-    path << Config::OUTPUT_DIR << "/frame_" << std::setfill('0') << std::setw(3) << index << ".ppm";
-    std::ofstream out(path.str(), std::ios::binary);
-    if (!out) return false;
-    out << "P6\n" << Config::H_VISIBLE << " " << Config::V_VISIBLE << "\n255\n";
-    out.write(reinterpret_cast<const char*>(data.data()), data.size());
-    return out.good();
+bool write_frame(const std::vector<uint8_t>& data) {
+    std::cout << "P6\n" << Config::H_VISIBLE << " " << Config::V_VISIBLE << "\n255\n";
+    std::cout.write(reinterpret_cast<const char*>(data.data()), data.size());
+    return std::cout.good();
 }
 
 void tick(Vtt_um_watpixels& dut, int count) {
@@ -105,17 +97,14 @@ int main() {
     const size_t framebuffer_size = static_cast<size_t>(Config::H_VISIBLE) * Config::V_VISIBLE * 3u;
     std::vector<uint8_t> framebuffer(framebuffer_size);
 
-    for (int frame_index = 0; frame_index < Config::FRAMES; frame_index = frame_index + 1) {
+    for (int frame_index = 0; frame_index < Config::FRAMES; frame_index++) {
         size_t write_index = 0;
-        for (int cycle = 0; cycle < cycles_per_frame; cycle = cycle + 1) {
+        for (int cycle = 0; cycle < cycles_per_frame; cycle++) {
             if (pixel_x < Config::H_VISIBLE && pixel_y < Config::V_VISIBLE) {
                 uint8_t uo = dut.uo_out;
-                framebuffer[write_index] = extract_color(uo, "red");
-                write_index = write_index + 1;
-                framebuffer[write_index] = extract_color(uo, "green");
-                write_index = write_index + 1;
-                framebuffer[write_index] = extract_color(uo, "blue");
-                write_index = write_index + 1;
+                framebuffer[write_index++] = extract_color(uo, "red");
+                framebuffer[write_index++] = extract_color(uo, "green");
+                framebuffer[write_index++] = extract_color(uo, "blue");
             }
             tick(dut, 1);
             advance_coords(pixel_x, pixel_y);
@@ -125,7 +114,7 @@ int main() {
             }
         }
 
-        if (!write_frame(frame_index, framebuffer)) {
+        if (!write_frame(framebuffer)) {
             return 1;
         }
     }
