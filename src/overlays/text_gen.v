@@ -1,7 +1,8 @@
 /* Text Overlay Generator
  *
- * Draws static foreground text over the animated background. Rendering uses a
- * tiny hard-coded bitmap font so we avoid ROMs that would bloat the design.
+ * The foreground text is stored as run-length encoded segments per scanline.
+ * Each VGA pixel evaluates a small number of range checks instead of pulling
+ * from a wide bitmap, keeping the combinational path short enough for timing.
  */
 module text_gen (
     input  wire       clk,
@@ -14,308 +15,132 @@ module text_gen (
     output reg  [5:0] rgb
 );
 
-    localparam integer SCALE        = 2;
-    localparam integer GLYPH_WIDTH  = 8;
-    localparam integer GLYPH_HEIGHT = 8;
-    localparam integer CHAR_WIDTH   = GLYPH_WIDTH * SCALE;  // 16 pixels wide glyphs
-    localparam integer CHAR_HEIGHT  = GLYPH_HEIGHT * SCALE; // 16 pixels tall glyphs
-    localparam integer LINE_GAP     = 4;
-    localparam [9:0] CHAR_WIDTH_PX  = CHAR_WIDTH[9:0];
-    localparam [9:0] CHAR_HEIGHT_PX = CHAR_HEIGHT[9:0];
-    localparam [9:0] LINE_GAP_PX    = LINE_GAP[9:0];
+    localparam [9:0] TEXT_LINE0_POS_X = 10'd256;
+    localparam [9:0] TEXT_LINE1_POS_X = 10'd232;
+    localparam [9:0] TARGET_LINE0_Y0  = 10'd336;
+    localparam [9:0] FALL_START_Y0    = 10'd0;
+    localparam [9:0] FALL_STEP_PX     = 10'd4;
+    localparam [9:0] CHAR_HEIGHT_PX   = 10'd16;
+    localparam [9:0] LINE_GAP_PX      = 10'd4;
+    localparam [9:0] LINE0_WIDTH_PX   = 10'd128;
+    localparam [9:0] LINE1_WIDTH_PX   = 10'd176;
+    localparam [5:0] COLOR_TEXT       = 6'b111111;
 
-    localparam [6:0] LINE0_LEN = 7'd8;
-    localparam [6:0] LINE1_LEN = 7'd11;
+    // Run-length encoded segments for each scanline (16 rows per line).
 
-    localparam [9:0] TEXT_LINE0_POS_X = 10'd256; // Center "WATERLOO"
-    localparam [9:0] TEXT_LINE1_POS_X = 10'd232; // Center "ENGINEERING"
-    localparam [10:0] TEXT_LINE0_RIGHT_FULL = TEXT_LINE0_POS_X + (LINE0_LEN * CHAR_WIDTH_PX);
-    localparam [10:0] TEXT_LINE1_RIGHT_FULL = TEXT_LINE1_POS_X + (LINE1_LEN * CHAR_WIDTH_PX);
-    localparam [9:0]  TEXT_LINE0_RIGHT     = TEXT_LINE0_RIGHT_FULL[9:0];
-    localparam [9:0]  TEXT_LINE1_RIGHT     = TEXT_LINE1_RIGHT_FULL[9:0];
-
-    localparam [9:0] TARGET_LINE0_Y0 = 10'd336;
-    localparam [9:0] FALL_START_Y0   = 10'd0;
-    localparam [9:0] FALL_STEP       = 10'd4;
-
-    localparam [5:0] COLOR_TEXT = 6'b111111;
-
-    // Character indices
-    localparam [4:0] CH_SPACE = 5'd0;
-    localparam [4:0] CH_W     = 5'd1;
-    localparam [4:0] CH_A     = 5'd2;
-    localparam [4:0] CH_T     = 5'd3;
-    localparam [4:0] CH_E     = 5'd4;
-    localparam [4:0] CH_R     = 5'd5;
-    localparam [4:0] CH_L     = 5'd6;
-    localparam [4:0] CH_O     = 5'd7;
-    localparam [4:0] CH_N     = 5'd8;
-    localparam [4:0] CH_G     = 5'd9;
-    localparam [4:0] CH_I     = 5'd10;
-
-    reg  [9:0] line0_base_y;
-
-    wire [9:0] line0_y0 = line0_base_y;
-    wire [10:0] line0_y1_full = line0_base_y + CHAR_HEIGHT_PX;
-    wire [9:0]  line0_y1      = line0_y1_full[9:0];
-    wire [10:0] line1_y0_full = line0_y1_full + LINE_GAP_PX;
-    wire [9:0]  line1_y0      = line1_y0_full[9:0];
-    wire [10:0] line1_y1_full = line1_y0_full + CHAR_HEIGHT_PX;
-    wire [9:0]  line1_y1      = line1_y1_full[9:0];
-
-    wire [9:0] line0_x_offset = x - TEXT_LINE0_POS_X;
-    wire [9:0] line1_x_offset = x - TEXT_LINE1_POS_X;
-    wire [9:0] line0_y_offset = y - line0_y0;
-    wire [9:0] line1_y_offset = y - line1_y0;
+    reg [9:0] drop_y;
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            line0_base_y <= FALL_START_Y0;
-        end else if (next_frame && (line0_base_y < TARGET_LINE0_Y0)) begin
-            if (line0_base_y + FALL_STEP >= TARGET_LINE0_Y0) begin
-                line0_base_y <= TARGET_LINE0_Y0;
-            end else begin
-                line0_base_y <= line0_base_y + FALL_STEP;
+            drop_y <= FALL_START_Y0;
+        end else begin
+            if (next_frame && (drop_y < TARGET_LINE0_Y0)) begin
+                if (drop_y + FALL_STEP_PX >= TARGET_LINE0_Y0) begin
+                    drop_y <= TARGET_LINE0_Y0;
+                end else begin
+                    drop_y <= drop_y + FALL_STEP_PX;
+                end
             end
         end
     end
 
-    reg [5:0] color_sel;
-    reg       pixel_on;
-    reg [6:0] char_index;
-    reg [2:0] col_index;
-    reg [2:0] row_index;
-    reg [4:0] char_code;
+    wire [9:0] line0_y0 = drop_y;
+    wire [9:0] line0_y1 = drop_y + CHAR_HEIGHT_PX;
+    wire [10:0] line1_y0_ext = drop_y + CHAR_HEIGHT_PX + LINE_GAP_PX;
+    wire [9:0] line1_y0 = line1_y0_ext[9:0];
+    wire [9:0] line1_y1 = line1_y0 + CHAR_HEIGHT_PX;
+
+    function automatic bit line0_pixel(input [3:0] row, input [9:0] x_rel);
+        bit hit;
+        case (row)
+            4'd0: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd20) && (x_rel <= 10'd27)) || ((x_rel >= 10'd34) && (x_rel <= 10'd45)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd75)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd100) && (x_rel <= 10'd107)) || ((x_rel >= 10'd116) && (x_rel <= 10'd123));
+            4'd1: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd20) && (x_rel <= 10'd27)) || ((x_rel >= 10'd34) && (x_rel <= 10'd45)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd75)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd100) && (x_rel <= 10'd107)) || ((x_rel >= 10'd116) && (x_rel <= 10'd123));
+            4'd2: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd51)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd3: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd51)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd4: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd51)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd5: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd51)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd6: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd6) && (x_rel <= 10'd9)) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd59)) || ((x_rel >= 10'd66) && (x_rel <= 10'd75)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd7: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd6) && (x_rel <= 10'd9)) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd59)) || ((x_rel >= 10'd66) && (x_rel <= 10'd75)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd8: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd4) && (x_rel <= 10'd5)) || ((x_rel >= 10'd10) && (x_rel <= 10'd11)) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd51)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd72) && (x_rel <= 10'd73)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd9: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd4) && (x_rel <= 10'd5)) || ((x_rel >= 10'd10) && (x_rel <= 10'd11)) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd51)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd72) && (x_rel <= 10'd73)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd10: hit = (x_rel <= 10'd3) || ((x_rel >= 10'd12) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd51)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd74) && (x_rel <= 10'd75)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd11: hit = (x_rel <= 10'd3) || ((x_rel >= 10'd12) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd51)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd74) && (x_rel <= 10'd75)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd108) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125));
+            4'd12: hit = (x_rel <= 10'd3) || ((x_rel >= 10'd12) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd100) && (x_rel <= 10'd107)) || ((x_rel >= 10'd116) && (x_rel <= 10'd123));
+            4'd13: hit = (x_rel <= 10'd3) || ((x_rel >= 10'd12) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd100) && (x_rel <= 10'd107)) || ((x_rel >= 10'd116) && (x_rel <= 10'd123));
+            default: hit = 1'b0;
+        endcase
+        return hit;
+    endfunction
+
+    function automatic bit line1_pixel(input [3:0] row, input [9:0] x_rel);
+        bit hit;
+        case (row)
+            4'd0: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd13)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd36) && (x_rel <= 10'd43)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd98) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd123)) || ((x_rel >= 10'd130) && (x_rel <= 10'd141)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd164) && (x_rel <= 10'd171));
+            4'd1: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd13)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd36) && (x_rel <= 10'd43)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd98) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd123)) || ((x_rel >= 10'd130) && (x_rel <= 10'd141)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd164) && (x_rel <= 10'd171));
+            4'd2: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd3)) || ((x_rel >= 10'd18) && (x_rel <= 10'd21)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd44) && (x_rel <= 10'd45)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd69)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd149)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163)) || ((x_rel >= 10'd172) && (x_rel <= 10'd173));
+            4'd3: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd3)) || ((x_rel >= 10'd18) && (x_rel <= 10'd21)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd44) && (x_rel <= 10'd45)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd69)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd149)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163)) || ((x_rel >= 10'd172) && (x_rel <= 10'd173));
+            4'd4: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd3)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd22) && (x_rel <= 10'd23)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd70) && (x_rel <= 10'd71)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd150) && (x_rel <= 10'd151)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163));
+            4'd5: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd3)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd22) && (x_rel <= 10'd23)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd70) && (x_rel <= 10'd71)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd150) && (x_rel <= 10'd151)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163));
+            4'd6: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd11)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd24) && (x_rel <= 10'd25)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd40) && (x_rel <= 10'd45)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd72) && (x_rel <= 10'd73)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd91)) || ((x_rel >= 10'd98) && (x_rel <= 10'd107)) || ((x_rel >= 10'd114) && (x_rel <= 10'd123)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd152) && (x_rel <= 10'd153)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163)) || ((x_rel >= 10'd168) && (x_rel <= 10'd173));
+            4'd7: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd11)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd24) && (x_rel <= 10'd25)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd40) && (x_rel <= 10'd45)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd72) && (x_rel <= 10'd73)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd91)) || ((x_rel >= 10'd98) && (x_rel <= 10'd107)) || ((x_rel >= 10'd114) && (x_rel <= 10'd123)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd152) && (x_rel <= 10'd153)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163)) || ((x_rel >= 10'd168) && (x_rel <= 10'd173));
+            4'd8: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd3)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd26) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd44) && (x_rel <= 10'd45)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd74) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd120) && (x_rel <= 10'd121)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd154) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163)) || ((x_rel >= 10'd172) && (x_rel <= 10'd173));
+            4'd9: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd3)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd26) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd44) && (x_rel <= 10'd45)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd74) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd120) && (x_rel <= 10'd121)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd154) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163)) || ((x_rel >= 10'd172) && (x_rel <= 10'd173));
+            4'd10: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd3)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd44) && (x_rel <= 10'd45)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd122) && (x_rel <= 10'd123)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163)) || ((x_rel >= 10'd172) && (x_rel <= 10'd173));
+            4'd11: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd3)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd34) && (x_rel <= 10'd35)) || ((x_rel >= 10'd44) && (x_rel <= 10'd45)) || ((x_rel >= 10'd54) && (x_rel <= 10'd57)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd98) && (x_rel <= 10'd99)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd122) && (x_rel <= 10'd123)) || ((x_rel >= 10'd134) && (x_rel <= 10'd137)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd162) && (x_rel <= 10'd163)) || ((x_rel >= 10'd172) && (x_rel <= 10'd173));
+            4'd12: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd13)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd36) && (x_rel <= 10'd43)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd98) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125)) || ((x_rel >= 10'd130) && (x_rel <= 10'd141)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd164) && (x_rel <= 10'd171));
+            4'd13: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd13)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd36) && (x_rel <= 10'd43)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd98) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125)) || ((x_rel >= 10'd130) && (x_rel <= 10'd141)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd164) && (x_rel <= 10'd171));
+            default: hit = 1'b0;
+        endcase
+        return hit;
+    endfunction
 
     always @(*) begin
-        draw       = 1'b0;
-        color_sel  = 6'b000000;
-        pixel_on   = 1'b0;
-        char_index = 7'd0;
-        col_index  = 3'd0;
-        row_index  = 3'd0;
-        char_code  = CH_SPACE;
+        reg [9:0] x_rel0;
+        reg [9:0] x_rel1;
+        reg [3:0] row0;
+        reg [3:0] row1;
+        reg [9:0] y_rel0;
+        reg [9:0] y_rel1;
+
+        draw = 0;
+        rgb  = 0;
+        x_rel0 = 0;
+        x_rel1 = 0;
+        row0   = 0;
+        row1   = 0;
+        y_rel0 = 0;
+        y_rel1 = 0;
 
         if (active) begin
-            // Render "WATERLOO"
             if ((y >= line0_y0) && (y < line0_y1) &&
-                (x >= TEXT_LINE0_POS_X) && (x < TEXT_LINE0_RIGHT)) begin
-                char_index = {1'b0, line0_x_offset[9:4]};
-                if (char_index < LINE0_LEN) begin
-                    col_index = line0_x_offset[3:1];
-                    row_index = line0_y_offset[3:1];
-                    char_code = line0_code(char_index[4:0]);
-                    pixel_on  = glyph_bit(char_code, row_index, col_index);
+                (x >= TEXT_LINE0_POS_X) && (x < TEXT_LINE0_POS_X + LINE0_WIDTH_PX)) begin
+                x_rel0 = x - TEXT_LINE0_POS_X;
+                y_rel0 = y - line0_y0;
+                row0   = y_rel0[3:0];
+                if (line0_pixel(row0, x_rel0)) begin
+                    draw = 1;
                 end
-            end
-            // Render "ENGINEERING" beneath the top line
-            else if ((y >= line1_y0) &&
-                     (y < line1_y1) &&
-                     (x >= TEXT_LINE1_POS_X) &&
-                     (x < TEXT_LINE1_RIGHT)) begin
-                char_index = {1'b0, line1_x_offset[9:4]};
-                if (char_index < LINE1_LEN) begin
-                    col_index = line1_x_offset[3:1];
-                    row_index = line1_y_offset[3:1];
-                    char_code = line1_code(char_index[4:0]);
-                    pixel_on  = glyph_bit(char_code, row_index, col_index);
+            end else if ((y >= line1_y0) && (y < line1_y1) &&
+                         (x >= TEXT_LINE1_POS_X) && (x < TEXT_LINE1_POS_X + LINE1_WIDTH_PX)) begin
+                x_rel1 = x - TEXT_LINE1_POS_X;
+                y_rel1 = y - line1_y0;
+                row1   = y_rel1[3:0];
+                if (line1_pixel(row1, x_rel1)) begin
+                    draw = 1;
                 end
             end
         end
 
-        if (pixel_on) begin
-            draw      = 1'b1;
-            color_sel = COLOR_TEXT;
+        if (draw) begin
+            rgb = {
+                COLOR_TEXT[5],
+                COLOR_TEXT[3],
+                COLOR_TEXT[1],
+                COLOR_TEXT[4],
+                COLOR_TEXT[2],
+                COLOR_TEXT[0]
+            };
         end
     end
-
-    always @(*) begin
-        rgb = {
-            color_sel[5],
-            color_sel[3],
-            color_sel[1],
-            color_sel[4],
-            color_sel[2],
-            color_sel[0]
-        };
-    end
-
-    function automatic [4:0] line0_code;
-        input [4:0] index;
-        begin
-            case (index)
-                5'd0: line0_code = CH_W;
-                5'd1: line0_code = CH_A;
-                5'd2: line0_code = CH_T;
-                5'd3: line0_code = CH_E;
-                5'd4: line0_code = CH_R;
-                5'd5: line0_code = CH_L;
-                5'd6: line0_code = CH_O;
-                5'd7: line0_code = CH_O;
-                default: line0_code = CH_SPACE;
-            endcase
-        end
-    endfunction
-
-    function automatic [4:0] line1_code;
-        input [4:0] index;
-        begin
-            case (index)
-                5'd0:  line1_code = CH_E;
-                5'd1:  line1_code = CH_N;
-                5'd2:  line1_code = CH_G;
-                5'd3:  line1_code = CH_I;
-                5'd4:  line1_code = CH_N;
-                5'd5:  line1_code = CH_E;
-                5'd6:  line1_code = CH_E;
-                5'd7:  line1_code = CH_R;
-                5'd8:  line1_code = CH_I;
-                5'd9:  line1_code = CH_N;
-                5'd10: line1_code = CH_G;
-                default: line1_code = CH_SPACE;
-            endcase
-        end
-    endfunction
-
-    function automatic bit glyph_bit;
-        input [4:0] code;
-        input [2:0] row;
-        input [2:0] col;
-        reg [7:0] row_bits;
-        begin
-            row_bits = glyph_row(code, row);
-            glyph_bit = row_bits[7 - col];
-        end
-    endfunction
-
-    function automatic [7:0] glyph_row;
-        input [4:0] code;
-        input [2:0] row;
-        begin
-            case (code)
-                CH_W: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b10000001;
-                        3'd1: glyph_row = 8'b10000001;
-                        3'd2: glyph_row = 8'b10000001;
-                        3'd3: glyph_row = 8'b10011001;
-                        3'd4: glyph_row = 8'b10100101;
-                        3'd5: glyph_row = 8'b11000011;
-                        3'd6: glyph_row = 8'b11000011;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_A: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b00111100;
-                        3'd1: glyph_row = 8'b01000010;
-                        3'd2: glyph_row = 8'b01000010;
-                        3'd3: glyph_row = 8'b01111110;
-                        3'd4: glyph_row = 8'b01000010;
-                        3'd5: glyph_row = 8'b01000010;
-                        3'd6: glyph_row = 8'b01000010;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_T: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b01111110;
-                        3'd1: glyph_row = 8'b00011000;
-                        3'd2: glyph_row = 8'b00011000;
-                        3'd3: glyph_row = 8'b00011000;
-                        3'd4: glyph_row = 8'b00011000;
-                        3'd5: glyph_row = 8'b00011000;
-                        3'd6: glyph_row = 8'b00011000;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_E: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b01111110;
-                        3'd1: glyph_row = 8'b01000000;
-                        3'd2: glyph_row = 8'b01000000;
-                        3'd3: glyph_row = 8'b01111100;
-                        3'd4: glyph_row = 8'b01000000;
-                        3'd5: glyph_row = 8'b01000000;
-                        3'd6: glyph_row = 8'b01111110;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_R: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b01111100;
-                        3'd1: glyph_row = 8'b01000010;
-                        3'd2: glyph_row = 8'b01000010;
-                        3'd3: glyph_row = 8'b01111100;
-                        3'd4: glyph_row = 8'b01001000;
-                        3'd5: glyph_row = 8'b01000100;
-                        3'd6: glyph_row = 8'b01000010;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_L: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b01000000;
-                        3'd1: glyph_row = 8'b01000000;
-                        3'd2: glyph_row = 8'b01000000;
-                        3'd3: glyph_row = 8'b01000000;
-                        3'd4: glyph_row = 8'b01000000;
-                        3'd5: glyph_row = 8'b01000000;
-                        3'd6: glyph_row = 8'b01111110;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_O: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b00111100;
-                        3'd1: glyph_row = 8'b01000010;
-                        3'd2: glyph_row = 8'b01000010;
-                        3'd3: glyph_row = 8'b01000010;
-                        3'd4: glyph_row = 8'b01000010;
-                        3'd5: glyph_row = 8'b01000010;
-                        3'd6: glyph_row = 8'b00111100;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_N: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b01000010;
-                        3'd1: glyph_row = 8'b01100010;
-                        3'd2: glyph_row = 8'b01010010;
-                        3'd3: glyph_row = 8'b01001010;
-                        3'd4: glyph_row = 8'b01000110;
-                        3'd5: glyph_row = 8'b01000010;
-                        3'd6: glyph_row = 8'b01000010;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_G: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b00111100;
-                        3'd1: glyph_row = 8'b01000010;
-                        3'd2: glyph_row = 8'b01000000;
-                        3'd3: glyph_row = 8'b01001110;
-                        3'd4: glyph_row = 8'b01000010;
-                        3'd5: glyph_row = 8'b01000010;
-                        3'd6: glyph_row = 8'b00111100;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                CH_I: begin
-                    case (row)
-                        3'd0: glyph_row = 8'b01111110;
-                        3'd1: glyph_row = 8'b00011000;
-                        3'd2: glyph_row = 8'b00011000;
-                        3'd3: glyph_row = 8'b00011000;
-                        3'd4: glyph_row = 8'b00011000;
-                        3'd5: glyph_row = 8'b00011000;
-                        3'd6: glyph_row = 8'b01111110;
-                        default: glyph_row = 8'b00000000;
-                    endcase
-                end
-                default: glyph_row = 8'b00000000;
-            endcase
-        end
-    endfunction
 
 endmodule
