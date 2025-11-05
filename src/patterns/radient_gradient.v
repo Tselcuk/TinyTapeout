@@ -34,24 +34,18 @@ module radient_gradient (
     wire signed [10:0] sx = $signed({1'b0, x}) - $signed({1'b0, CENTER_X});
     wire signed [10:0] sy = $signed({1'b0, y}) - $signed({1'b0, CENTER_Y});
 
-    wire [21:0] dx_sq = sx * sx;
-    wire [21:0] dy_sq = sy * sy;
-    wire [22:0] distance_sq = dx_sq + dy_sq;
+    wire [10:0] abs_sx = sx[10] ? -sx : sx;
+    wire [10:0] abs_sy = sy[10] ? -sy : sy;
+    wire [11:0] manhattan_distance = abs_sx + abs_sy;
 
     wire [7:0] base_radius = 30 + frame_counter[7:1]; // This is what expands the pattern outwards
 
-    // Concentric ring radii (inner to outer)
+    // Concentric ring radii (inner to outer) - Adjusted for Manhattan distance
     wire [7:0] ring1_radius = (base_radius > 24) ? (base_radius - 24) : 0;
     wire [7:0] ring2_radius = base_radius + 24;
     wire [7:0] ring3_radius = base_radius + 48;
     wire [7:0] ring4_radius = base_radius + 72;
     wire [7:0] ring5_radius = base_radius + 96;
-
-    wire [15:0] ring1_radius_sq = ring1_radius * ring1_radius;
-    wire [15:0] ring2_radius_sq = ring2_radius * ring2_radius;
-    wire [15:0] ring3_radius_sq = ring3_radius * ring3_radius;
-    wire [15:0] ring4_radius_sq = ring4_radius * ring4_radius;
-    wire [15:0] ring5_radius_sq = ring5_radius * ring5_radius;
 
     // Predefined RGB values in output bit order {R[1], G[1], B[1], R[0], G[0], B[0]}
     localparam [5:0] NAVY_EDGE = 6'b000001;
@@ -68,15 +62,15 @@ module radient_gradient (
             // Default to a deep navy edge.
             rgb = NAVY_EDGE;
 
-            if (distance_sq <= {7'd0, ring1_radius_sq}) begin
+            if (manhattan_distance <= {4'd0, ring1_radius}) begin
                 rgb = MAGENTA_CORE;
-            end else if (distance_sq <= {7'd0, ring2_radius_sq}) begin
+            end else if (manhattan_distance <= {4'd0, ring2_radius}) begin
                 rgb = MAGENTA_GLOW;
-            end else if (distance_sq <= {7'd0, ring3_radius_sq}) begin
+            end else if (manhattan_distance <= {4'd0, ring3_radius}) begin
                 rgb = MAGENTA_INNER_RING;
-            end else if (distance_sq <= {7'd0, ring4_radius_sq}) begin
+            end else if (manhattan_distance <= {4'd0, ring4_radius}) begin
                 rgb = MAGENTA_OUTER_RING;
-            end else if (distance_sq <= {7'd0, ring5_radius_sq}) begin
+            end else if (manhattan_distance <= {4'd0, ring5_radius}) begin
                 rgb = BLUE_HALO;
             end
         end
