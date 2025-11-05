@@ -1,13 +1,13 @@
-// Returns a next_frame pulse and a step_size for the pattern to use
-// next_frame will be locked at 60Hz, step_size varies based on the speed select and affects movements of the pattern
+// Returns step_size for the pattern and paused state
+// step_size varies based on the speed select and affects movements of the pattern
+// Use vsync_rising && !paused as the animation trigger (vsync rising edge signals next frame)
 module speed_controller (
     input wire clk,
     input wire rst,
     input wire [2:0] speed,
     input wire pause,
     input wire resume,
-    input wire frame_start,
-    output reg next_frame,
+    output reg paused,
     output reg [11:0] step_size
 );
     // Map selectable speeds onto fixed-point step sizes (Q8.4).
@@ -23,26 +23,15 @@ module speed_controller (
         endcase
     end
 
-    reg paused;
-
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            paused     <= 0;
-            next_frame <= 0;
+            paused <= 0;
         end else begin
             // This determines if the animation is paused or not
             if (pause) begin
                 paused <= 1;
             end else if (resume) begin
                 paused <= 0;
-            end
-
-            // This determines if the next frame pulse should be asserted
-            // next_frame will only be asserted if we are not paused and need to advance to the next frame
-            if (!paused && frame_start) begin
-                next_frame <= 1;
-            end else begin
-                next_frame <= 0;
             end
         end
     end

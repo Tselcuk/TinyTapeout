@@ -7,7 +7,7 @@ module tt_um_watpixels (
     output wire [7:0] uio_out,// IOs: Output path
     output wire [7:0] uio_oe, // IOs: Enable path (active high: 0=input, 1=output)
     /* verilator lint_off UNUSEDSIGNAL */
-    input wire ena,           // always 1 when the design is powered, so you can ignore it
+    input wire ena,
     /* verilator lint_on UNUSEDSIGNAL */
     input wire clk,           // clock
     input wire rst_n          // reset_n - low to reset
@@ -16,9 +16,7 @@ module tt_um_watpixels (
   // Input Signal Mapping
   wire pause = ui_in[0];
   wire resume = ui_in[1];
-  /* verilator lint_off UNUSEDSIGNAL */
-  wire speed_1 = ui_in[2]; // Default speed, not explicitly checked
-  /* verilator lint_on UNUSEDSIGNAL */
+  // We don't have to declare speed_1 because it is the default speed. If the user actually selects speed 1, it will be handled by the default case below
   wire speed_2 = ui_in[3];
   wire speed_3 = ui_in[4];
   wire speed_4 = ui_in[5];
@@ -46,10 +44,7 @@ module tt_um_watpixels (
 
   // Pattern Output
   wire [5:0] pattern_rgb;
-  /* verilator lint_off UNUSEDSIGNAL */
-  wire [1:0] pattern_select_unused; // Dummy wire for unused output
-  /* verilator lint_on UNUSEDSIGNAL */
-  wire next_frame;
+  wire paused;
   wire [11:0] step_size;
 
   // Emblem Overlay Output
@@ -69,15 +64,14 @@ module tt_um_watpixels (
       .y(y_pos)
   );
 
-  // Instantiate Speed Controller -> emits next_frame pulse
+  // Instantiate Speed Controller -> outputs paused state and step_size
   speed_controller u_speed_controller (
       .clk(clk),
       .rst(rst),
       .speed(speed),
       .pause(pause),
       .resume(resume),
-      .frame_start(frame_start),
-      .next_frame(next_frame),
+      .paused(paused),
       .step_size(step_size)
   );
 
@@ -89,9 +83,8 @@ module tt_um_watpixels (
       .y(y_pos),
       .active(active),
       .vsync(vsync),
-      .next_frame(next_frame),
+      .paused(paused),
       .step_size(step_size),
-      .pattern_select(pattern_select_unused),
       .rgb(pattern_rgb)
   );
 

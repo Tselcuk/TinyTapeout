@@ -6,9 +6,8 @@ module pattern_selector (
     input wire [9:0] y,
     input wire active,
     input wire vsync,
-    input wire next_frame,
+    input wire paused,
     input wire [11:0] step_size,
-    output reg [1:0] pattern_select,
     output reg [5:0] rgb
 );
     localparam [1:0] PATTERN_CHECKERBOARD = 0;
@@ -17,6 +16,7 @@ module pattern_selector (
     localparam [9:0] FRAMES_RADIENT = 480;
     localparam [1:0] PATTERN_LAST = PATTERN_RADIENT;
 
+    reg [1:0] pattern_select;
     reg switch_pending;
     reg [9:0] frame_counter;
 
@@ -28,12 +28,12 @@ module pattern_selector (
     wire [9:0] frames_for_current_pattern = (pattern_select == PATTERN_CHECKERBOARD) ? FRAMES_CHECKERBOARD : FRAMES_RADIENT;
 
     // Track VGA frame advances and defer pattern switches to the next frame origin.
-    // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse)
-    // instead of using next_frame which is an animation control signal.
+    // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse).
     // vsync is active low, so we detect when it transitions from low to high.
     
     reg vsync_q; // Stores previous value of vsync
-    wire vsync_rising = vsync && !vsync_q; // This is used to detect the rising edge of the vsync signal
+    wire vsync_rising = vsync && !vsync_q; // Rising edge of vsync signals next frame
+    wire animation_trigger = vsync_rising && !paused;
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -70,7 +70,7 @@ module pattern_selector (
         .x(x),
         .y(y),
         .active(checkerboard_selected ? active : 0),
-        .next_frame(checkerboard_selected ? next_frame : 0),
+        .next_frame(checkerboard_selected ? animation_trigger : 0),
         .step_size(step_size),
         .rgb(checkboard_rgb)
     );
@@ -82,7 +82,7 @@ module pattern_selector (
         .x(x),
         .y(y),
         .active(radient_selected ? active : 0),
-        .next_frame(radient_selected ? next_frame : 0),
+        .next_frame(radient_selected ? animation_trigger : 0),
         .step_size(step_size),
         .rgb(radient_rgb)
     );
