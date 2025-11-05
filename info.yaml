@@ -17,7 +17,7 @@ project:
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
-    - "project.v"
+    - "tt_um_watpixels.v"
     - "core/vga_timing.v"
     - "core/speed_controller.v"
     - "patterns/pattern_selector.v"
