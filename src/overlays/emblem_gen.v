@@ -102,30 +102,22 @@ module emblem_gen (
         input [9:0] py;
         input [9:0] origin_x;
         input [9:0] origin_y;
-        reg [5:0] row_offset;
         reg [9:0] col_offset;
-        reg [5:0] col_offset_flipped;
         reg [5:0] row_idx;
         reg [5:0] col_idx;
         reg [LION_WIDTH_PIX-1:0] mask;
-        reg [5:0] row_offset_temp;
-        reg [5:0] col_offset_flipped_temp;
-        reg [9:0] row_offset_full;
-        reg [9:0] col_offset_flipped_full;
         begin
             is_lion_pixel = 0;
             if ((py >= origin_y) && (py < origin_y + LION_HEIGHT) && (px >= origin_x) && (px < origin_x + LION_WIDTH)) begin
-                row_offset_full = py - origin_y;
-                row_offset_temp = row_offset_full[5:0];
-                row_offset = row_offset_temp;
                 col_offset = px - origin_x;
-                row_idx = row_offset;
+                /* verilator lint_off WIDTH */
+                row_idx = py - origin_y;
+                /* verilator lint_on WIDTH */
                 mask = lion_row(row_idx);
                 // Flip horizontally: mirror column index
-                col_offset_flipped_full = LION_WIDTH - 1 - col_offset;
-                col_offset_flipped_temp = col_offset_flipped_full[5:0];
-                col_offset_flipped = col_offset_flipped_temp;
-                col_idx = col_offset_flipped;
+                /* verilator lint_off WIDTH */
+                col_idx = LION_WIDTH - 1 - col_offset;
+                /* verilator lint_on WIDTH */
                 is_lion_pixel = mask[col_idx];
             end
         end
