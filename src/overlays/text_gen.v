@@ -101,8 +101,10 @@ module text_gen (
         reg [3:0] row1;
         reg [3:0] y_rel0;
         reg [3:0] y_rel1;
-        reg [9:0] y_rel0_temp;
-        reg [9:0] y_rel1_temp;
+        reg [3:0] y_rel0_temp;
+        reg [3:0] y_rel1_temp;
+        reg [9:0] y_rel0_full;
+        reg [9:0] y_rel1_full;
 
         draw = 0;
         rgb  = 0;
@@ -114,13 +116,16 @@ module text_gen (
         y_rel1 = 0;
         y_rel0_temp = 0;
         y_rel1_temp = 0;
+        y_rel0_full = 0;
+        y_rel1_full = 0;
 
         if (active) begin
             if ((y >= line0_y0) && (y < line0_y1) &&
                 (x >= TEXT_LINE0_POS_X) && (x < TEXT_LINE0_POS_X + LINE0_WIDTH_PX)) begin
                 x_rel0 = x - TEXT_LINE0_POS_X;
-                y_rel0_temp = y - line0_y0;
-                y_rel0 = y_rel0_temp[3:0];
+                y_rel0_full = y - line0_y0;
+                y_rel0_temp = y_rel0_full[3:0];
+                y_rel0 = y_rel0_temp;
                 row0   = y_rel0;
                 if (line0_pixel(row0, x_rel0)) begin
                     draw = 1;
@@ -128,8 +133,9 @@ module text_gen (
             end else if ((y >= line1_y0) && (y < line1_y1) &&
                          (x >= TEXT_LINE1_POS_X) && (x < TEXT_LINE1_POS_X + LINE1_WIDTH_PX)) begin
                 x_rel1 = x - TEXT_LINE1_POS_X;
-                y_rel1_temp = y - line1_y0;
-                y_rel1 = y_rel1_temp[3:0];
+                y_rel1_full = y - line1_y0;
+                y_rel1_temp = y_rel1_full[3:0];
+                y_rel1 = y_rel1_temp;
                 row1   = y_rel1;
                 if (line1_pixel(row1, x_rel1)) begin
                     draw = 1;
