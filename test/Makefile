@@ -5,7 +5,7 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v core/vga_timing.v core/speed_controller.v patterns/pattern_selector.v patterns/checkerboard_gen.v patterns/radient_gradient.v
+PROJECT_SOURCES = project.v core/vga_timing.v core/speed_controller.v patterns/pattern_selector.v patterns/checkerboard_gen.v patterns/radient_gradient.v overlay/emblem_gen.v
 
 ifneq ($(GATES),yes)
 
@@ -31,7 +31,7 @@ VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
 endif
 
 # Allow sharing configuration between design and testbench via `include`:
-COMPILE_ARGS 		+= -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/patterns
+COMPILE_ARGS 		+= -I$(SRC_DIR) -I$(SRC_DIR)/core -I$(SRC_DIR)/patterns -I$(SRC_DIR)/overlay
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v

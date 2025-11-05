@@ -52,6 +52,11 @@ module tt_um_watpixels (
   wire next_frame;
   wire [11:0] step_size;
 
+  // Emblem Overlay Output
+  wire emblem_draw;
+  wire [5:0] emblem_rgb;
+  wire [5:0] final_rgb;
+
   // Instantiate VGA Timing Generator
   vga_timing u_vga_timing (
       .clk(clk),
@@ -90,15 +95,27 @@ module tt_um_watpixels (
       .rgb(pattern_rgb)
   );
 
+  // Instantiate Emblem Overlay
+  emblem_gen u_emblem_gen (
+      .x(x_pos),
+      .y(y_pos),
+      .active(active),
+      .draw(emblem_draw),
+      .rgb(emblem_rgb)
+  );
+
+  // Blend emblem overlay with pattern, emblem takes priority when it draws
+  assign final_rgb = emblem_draw ? emblem_rgb : pattern_rgb;
+
   // Output Signal Mapping
   assign uo_out[0] = hsync;
-  assign uo_out[1] = pattern_rgb[0]; // B[0]
-  assign uo_out[2] = pattern_rgb[1]; // G[0]
-  assign uo_out[3] = pattern_rgb[2]; // R[0]
+  assign uo_out[1] = final_rgb[0]; // B[0]
+  assign uo_out[2] = final_rgb[1]; // G[0]
+  assign uo_out[3] = final_rgb[2]; // R[0]
   assign uo_out[4] = vsync;
-  assign uo_out[5] = pattern_rgb[3]; // B[1]
-  assign uo_out[6] = pattern_rgb[4]; // G[1]
-  assign uo_out[7] = pattern_rgb[5]; // R[1]
+  assign uo_out[5] = final_rgb[3]; // B[1]
+  assign uo_out[6] = final_rgb[4]; // G[1]
+  assign uo_out[7] = final_rgb[5]; // R[1]
 
   // Bidirectional IOs
   assign uio_out = 0; // Not used
