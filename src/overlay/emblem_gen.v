@@ -13,10 +13,10 @@ module emblem_gen(
     localparam [9:0] EMBLEM_CENTER_X = (EMBLEM_X0 + EMBLEM_X1) >> 1;
     localparam [9:0] HALF_WIDTH = (EMBLEM_X1 - EMBLEM_X0) >> 1;
 
-    localparam [5:0] COLOR_BORDER = 6'b000000;
-    localparam [5:0] COLOR_GOLD = 6'b111100;
+    localparam [5:0] COLOR_BLACK = 6'b000000;
+    localparam [5:0] COLOR_GOLD = 6'b110110;
     localparam [5:0] COLOR_WHITE = 6'b111111;
-    localparam [5:0] COLOR_RED = 6'b110000;
+    localparam [5:0] COLOR_RED = 6'b100100;
 
     localparam [9:0] BORDER_THICKNESS = 3;
 
@@ -143,7 +143,6 @@ module emblem_gen(
     wire top_right_lion = is_lion_pixel(x, y, RIGHT_LION_X, TOP_LION_Y);
     wire bottom_lion = is_lion_pixel(x, y, CENTER_LION_X, BOTTOM_LION_Y);
 
-    reg [5:0] color_sel;
     reg draw_flag;
 
     always @(*) begin
@@ -155,26 +154,22 @@ module emblem_gen(
         inner_half = 0;
         shield_border = 0;
         draw_flag = 0;
-        color_sel = 6'b000000;
+        rgb = 6'b000000;
 
         if (active && (y >= EMBLEM_Y0) && (y < EMBLEM_Y1)) begin
             half_width = shield_half_width(rel_y);
             if (abs_dx <= half_width) begin
                 draw_flag = 1;
-                color_sel = COLOR_GOLD;
+                rgb = COLOR_GOLD;
 
                 inner_half = (half_width > BORDER_THICKNESS) ? (half_width - BORDER_THICKNESS) : 0;
                 if ((abs_dx > inner_half) || (rel_y < BORDER_THICKNESS)) shield_border = 1;
 
-                if (top_left_lion || top_right_lion || bottom_lion) color_sel = COLOR_RED;
-                if (shield_border) color_sel = COLOR_BORDER;
+                if (top_left_lion || top_right_lion || bottom_lion) rgb = COLOR_RED;
+                if (shield_border) rgb = COLOR_BLACK;
             end
         end
         draw = draw_flag;
-    end
-
-    always @(*) begin
-        rgb = {color_sel[5], color_sel[3], color_sel[1], color_sel[4], color_sel[2], color_sel[0]};
     end
 
 endmodule
