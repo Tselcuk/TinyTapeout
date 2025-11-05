@@ -1,16 +1,14 @@
 module tt_um_watpixels (
+    /* verilator lint_off UNUSEDSIGNAL */
     input wire [7:0] ui_in,   // Dedicated inputs
     output wire [7:0] uo_out, // Dedicated outputs
-    /* verilator lint_off UNUSEDSIGNAL */
     input wire [7:0] uio_in,  // IOs: Input path
-    /* verilator lint_on UNUSEDSIGNAL */
     output wire [7:0] uio_out,// IOs: Output path
     output wire [7:0] uio_oe, // IOs: Enable path (active high: 0=input, 1=output)
-    /* verilator lint_off UNUSEDSIGNAL */
     input wire ena,
-    /* verilator lint_on UNUSEDSIGNAL */
     input wire clk,           // clock
     input wire rst_n          // reset_n - low to reset
+    /* verilator lint_on UNUSEDSIGNAL */
 );
 
   // Input Signal Mapping
@@ -35,7 +33,6 @@ module tt_um_watpixels (
   wire hsync;
   wire vsync;
   wire active;
-  wire frame_start;
   wire [9:0] x_pos;
   wire [9:0] y_pos;
 
@@ -59,7 +56,6 @@ module tt_um_watpixels (
       .hsync(hsync),
       .vsync(vsync),
       .active(active),
-      .frame_start(frame_start),
       .x(x_pos),
       .y(y_pos)
   );

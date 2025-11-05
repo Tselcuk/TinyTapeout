@@ -4,7 +4,6 @@ module vga_timing (
     output wire hsync,
     output wire vsync,
     output wire active,
-    output wire frame_start,
     output reg [9:0] x,
     output reg [9:0] y
 );
@@ -42,7 +41,6 @@ module vga_timing (
         end
     end
 
-    assign frame_start = (x == 0) && (y == 0);
     assign active = (x < H_DISPLAY) && (y < V_DISPLAY);
     assign hsync = !((x >= (H_DISPLAY + H_FRONT)) && (x < (H_DISPLAY + H_FRONT + H_SYNC)));
     assign vsync = !((y >= (V_DISPLAY + V_FRONT)) && (y < (V_DISPLAY + V_FRONT + V_SYNC)));
