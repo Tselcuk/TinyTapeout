@@ -52,13 +52,6 @@ module tt_um_watpixels (
   wire next_frame;
   wire [11:0] step_size;
 
-  // Overlay layers
-  wire emblem_draw;
-  wire [5:0] emblem_rgb;
-  wire text_draw;
-  wire [5:0] text_rgb;
-  reg [5:0] final_rgb;
-
   // Instantiate VGA Timing Generator
   vga_timing u_vga_timing (
       .clk(clk),
@@ -97,46 +90,15 @@ module tt_um_watpixels (
       .rgb(pattern_rgb)
   );
 
-  // Overlay layers
-  emblem_gen u_emblem_gen (
-      .x(x_pos),
-      .y(y_pos),
-      .active(active),
-      .draw(emblem_draw),
-      .rgb(emblem_rgb)
-  );
-
-  text_gen u_text_gen (
-      .clk(clk),
-      .rst(rst),
-      .x(x_pos),
-      .y(y_pos),
-      .active(active),
-      .next_frame(next_frame),
-      .draw(text_draw),
-      .rgb(text_rgb)
-  );
-
-  always @(*) begin
-    final_rgb = pattern_rgb;
-    // Overlay rendering
-    if (emblem_draw) begin
-      final_rgb = emblem_rgb;
-    end
-    if (text_draw) begin
-      final_rgb = text_rgb;
-    end
-  end
-
   // Output Signal Mapping
   assign uo_out[0] = hsync;
-  assign uo_out[1] = final_rgb[0]; // B[0]
-  assign uo_out[2] = final_rgb[1]; // G[0]
-  assign uo_out[3] = final_rgb[2]; // R[0]
+  assign uo_out[1] = pattern_rgb[0]; // B[0]
+  assign uo_out[2] = pattern_rgb[1]; // G[0]
+  assign uo_out[3] = pattern_rgb[2]; // R[0]
   assign uo_out[4] = vsync;
-  assign uo_out[5] = final_rgb[3]; // B[1]
-  assign uo_out[6] = final_rgb[4]; // G[1]
-  assign uo_out[7] = final_rgb[5]; // R[1]
+  assign uo_out[5] = pattern_rgb[3]; // B[1]
+  assign uo_out[6] = pattern_rgb[4]; // G[1]
+  assign uo_out[7] = pattern_rgb[5]; // R[1]
 
   // Bidirectional IOs
   assign uio_out = 0; // Not used
