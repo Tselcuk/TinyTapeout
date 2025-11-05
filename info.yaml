@@ -23,6 +23,7 @@ project:
     - "patterns/pattern_selector.v"
     - "patterns/checkerboard_gen.v"
     - "patterns/radient_gradient.v"
+    - "overlay/emblem_gen.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
