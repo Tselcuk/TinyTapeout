@@ -4,7 +4,9 @@ module checkerboard_gen (
     input wire rst,
     input wire pattern_enable,
     input wire [9:0] x,
+    /* verilator lint_off UNUSEDSIGNAL */
     input wire [9:0] y,
+    /* verilator lint_on UNUSEDSIGNAL */
     input wire active,
     input wire next_frame,
     input wire [11:0] step_size,
@@ -15,21 +17,23 @@ module checkerboard_gen (
     reg [3:0] subpixel_accum;
 
     wire [4:0] frac_sum = {1'b0, subpixel_accum} + {1'b0, step_size[3:0]};
-    wire [8:0] offset_sum = {1'b0, frame_offset}
-                          + {1'b0, step_size[11:4]}
-                          + {{8{1'b0}}, frac_sum[4]};
+    wire [7:0] offset_sum = frame_offset
+                          + step_size[11:4]
+                          + {{7{1'b0}}, frac_sum[4]};
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             frame_offset   <= 0;
             subpixel_accum <= 0;
         end else if (pattern_enable && next_frame) begin
-            frame_offset   <= offset_sum[7:0];
+            frame_offset   <= offset_sum;
             subpixel_accum <= frac_sum[3:0];
         end
     end
 
+    /* verilator lint_off UNUSEDSIGNAL */
     wire [9:0] shifted_x = x + {frame_offset, 1'b0}; // This shifts the x coordinate by the frame offset and is what creates the movement of the pattern
+    /* verilator lint_on UNUSEDSIGNAL */
     wire tile_select = shifted_x[5] ^ y[5]; // This is the part that actually creates the checkerboard pattern
 
     always @(*) begin

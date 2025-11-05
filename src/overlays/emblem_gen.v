@@ -23,7 +23,6 @@ module emblem_gen (
     localparam [5:0] COLOR_WHITE  = 6'b111111;
     localparam [5:0] COLOR_RED    = 6'b110000;
 
-    localparam [9:0] SHIELD_HEIGHT     = EMBLEM_Y1 - EMBLEM_Y0;
     localparam [9:0] BORDER_THICKNESS  = 3;
     localparam [9:0] CHEVRON_APEX         = 56;
     localparam [9:0] CHEVRON_HEIGHT       = 56;
@@ -36,7 +35,6 @@ module emblem_gen (
     localparam [19:0] CHEVRON_ROUNDING_TERM = CHEVRON_HEIGHT_DENOM >> 1;
 
     localparam integer LION_WIDTH_PIX  = 48;
-    localparam integer LION_HEIGHT_PIX = 45;
     localparam [9:0] LION_WIDTH        = 48;
     localparam [9:0] LION_HEIGHT       = 45;
     localparam [9:0] TOP_LION_Y        = EMBLEM_Y0 + 16;
@@ -104,9 +102,9 @@ module emblem_gen (
         input [9:0] py;
         input [9:0] origin_x;
         input [9:0] origin_y;
-        reg [9:0] row_offset;
+        reg [5:0] row_offset;
         reg [9:0] col_offset;
-        reg [9:0] col_offset_flipped;
+        reg [5:0] col_offset_flipped;
         reg [5:0] row_idx;
         reg [5:0] col_idx;
         reg [LION_WIDTH_PIX-1:0] mask;

@@ -1,10 +1,14 @@
 module tt_um_watpixels (
     input wire [7:0] ui_in,   // Dedicated inputs
     output wire [7:0] uo_out, // Dedicated outputs
+    /* verilator lint_off UNUSEDSIGNAL */
     input wire [7:0] uio_in,  // IOs: Input path
+    /* verilator lint_on UNUSEDSIGNAL */
     output wire [7:0] uio_out,// IOs: Output path
     output wire [7:0] uio_oe, // IOs: Enable path (active high: 0=input, 1=output)
+    /* verilator lint_off UNUSEDSIGNAL */
     input wire ena,           // always 1 when the design is powered, so you can ignore it
+    /* verilator lint_on UNUSEDSIGNAL */
     input wire clk,           // clock
     input wire rst_n          // reset_n - low to reset
 );
@@ -12,7 +16,9 @@ module tt_um_watpixels (
   // Input Signal Mapping
   wire pause = ui_in[0];
   wire resume = ui_in[1];
-  wire speed_1 = ui_in[2];
+  /* verilator lint_off UNUSEDSIGNAL */
+  wire speed_1 = ui_in[2]; // Default speed, not explicitly checked
+  /* verilator lint_on UNUSEDSIGNAL */
   wire speed_2 = ui_in[3];
   wire speed_3 = ui_in[4];
   wire speed_4 = ui_in[5];
@@ -25,7 +31,7 @@ module tt_um_watpixels (
                  speed_5 ? 5 :
                  speed_4 ? 4 :
                  speed_3 ? 3 :
-                 speed_2 ? 2 : 1; // Default to speed 1
+                 speed_2 ? 2 : 1; // Default to speed 1 (speed_1 is ui_in[2])
 
   // VGA Timing Signals
   wire hsync;
@@ -40,7 +46,9 @@ module tt_um_watpixels (
 
   // Pattern Output
   wire [5:0] pattern_rgb;
-  wire [1:0] pattern_select;
+  /* verilator lint_off UNUSEDSIGNAL */
+  wire [1:0] pattern_select_unused; // Dummy wire for unused output
+  /* verilator lint_on UNUSEDSIGNAL */
   wire next_frame;
   wire [11:0] step_size;
 
@@ -85,7 +93,7 @@ module tt_um_watpixels (
       .vsync(vsync),
       .next_frame(next_frame),
       .step_size(step_size),
-      .pattern_select(pattern_select),
+      .pattern_select(pattern_select_unused),
       .rgb(pattern_rgb)
   );
 

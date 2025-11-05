@@ -46,8 +46,8 @@ module text_gen (
 
     wire [9:0] line0_y0 = drop_y;
     wire [9:0] line0_y1 = drop_y + CHAR_HEIGHT_PX;
-    wire [10:0] line1_y0_ext = drop_y + CHAR_HEIGHT_PX + LINE_GAP_PX;
-    wire [9:0] line1_y0 = line1_y0_ext[9:0];
+    wire [9:0] line1_y0_ext = drop_y + CHAR_HEIGHT_PX + LINE_GAP_PX;
+    wire [9:0] line1_y0 = line1_y0_ext;
     wire [9:0] line1_y1 = line1_y0 + CHAR_HEIGHT_PX;
 
     function [0:0] line0_pixel(input [3:0] row, input [9:0] x_rel);
@@ -99,8 +99,8 @@ module text_gen (
         reg [9:0] x_rel1;
         reg [3:0] row0;
         reg [3:0] row1;
-        reg [9:0] y_rel0;
-        reg [9:0] y_rel1;
+        reg [3:0] y_rel0;
+        reg [3:0] y_rel1;
 
         draw = 0;
         rgb  = 0;
