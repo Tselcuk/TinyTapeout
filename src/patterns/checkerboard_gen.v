@@ -9,17 +9,17 @@ module checkerboard_gen (
     /* verilator lint_on UNUSEDSIGNAL */
     input wire active,
     input wire next_frame,
-    input wire [11:0] step_size,
+    input wire [2:0] step_size,
     output reg [5:0] rgb
 );
 
     reg [7:0] frame_offset;
-    reg [3:0] subpixel_accum;
+    reg [1:0] subpixel_accum;
 
-    wire [4:0] frac_sum = {1'b0, subpixel_accum} + {1'b0, step_size[3:0]};
+    wire [2:0] frac_sum = {1'b0, subpixel_accum} + {1'b0, step_size[1:0]};
     wire [7:0] offset_sum = frame_offset
-                          + step_size[11:4]
-                          + {{7{1'b0}}, frac_sum[4]};
+                          + {{7{1'b0}}, step_size[2]}
+                          + {{7{1'b0}}, frac_sum[2]};
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -27,7 +27,7 @@ module checkerboard_gen (
             subpixel_accum <= 0;
         end else if (pattern_enable && next_frame) begin
             frame_offset   <= offset_sum;
-            subpixel_accum <= frac_sum[3:0];
+            subpixel_accum <= frac_sum[1:0];
         end
     end
 

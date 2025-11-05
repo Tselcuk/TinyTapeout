@@ -45,7 +45,7 @@ module tt_um_watpixels (
   // Pattern Output
   wire [5:0] pattern_rgb;
   wire paused;
-  wire [11:0] step_size;
+  wire [2:0] step_size;
 
   // Emblem Overlay Output
   wire emblem_draw;

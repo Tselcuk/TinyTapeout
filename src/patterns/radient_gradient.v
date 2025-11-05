@@ -6,17 +6,17 @@ module radient_gradient (
     input wire [9:0] y,
     input wire active,
     input wire next_frame,
-    input wire [11:0] step_size,
+    input wire [2:0] step_size,
     output reg [5:0] rgb
 );
 
     reg [9:0] frame_counter;
-    reg [3:0] subframe_accum;
+    reg [1:0] subframe_accum;
 
-    wire [4:0] frac_sum = {1'b0, subframe_accum} + {1'b0, step_size[3:0]};
+    wire [2:0] frac_sum = {1'b0, subframe_accum} + {1'b0, step_size[1:0]};
     wire [9:0] counter_sum = frame_counter
-                          + {{2{1'b0}}, step_size[11:4]}
-                          + {{9{1'b0}}, frac_sum[4]};
+                          + {{9{1'b0}}, step_size[2]}
+                          + {{8{1'b0}}, frac_sum[2]};
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -24,7 +24,7 @@ module radient_gradient (
             subframe_accum <= 0;
         end else if (pattern_enable && next_frame) begin
             frame_counter  <= counter_sum;
-            subframe_accum <= frac_sum[3:0];
+            subframe_accum <= frac_sum[1:0];
         end
     end
 

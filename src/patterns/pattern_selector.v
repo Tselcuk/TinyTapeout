@@ -7,7 +7,7 @@ module pattern_selector (
     input wire active,
     input wire vsync,
     input wire paused,
-    input wire [11:0] step_size,
+    input wire [2:0] step_size,
     output reg [5:0] rgb
 );
     localparam [1:0] PATTERN_CHECKERBOARD = 0;
