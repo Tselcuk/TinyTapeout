@@ -1,9 +1,9 @@
-module emblem_gen (
-    input  wire [9:0] x,
-    input  wire [9:0] y,
-    input  wire       active,
-    output reg        draw,
-    output reg  [5:0] rgb
+module emblem_gen(
+    input wire [9:0] x,
+    input wire [9:0] y,
+    input wire active,
+    output reg draw,
+    output reg [5:0] rgb
 );
 
     localparam [9:0] EMBLEM_X0 = 240;
