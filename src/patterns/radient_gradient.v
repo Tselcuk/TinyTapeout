@@ -14,16 +14,14 @@ module radient_gradient (
     reg [1:0] subframe_accum;
 
     wire [2:0] frac_sum = {1'b0, subframe_accum} + {1'b0, step_size[1:0]};
-    wire [9:0] counter_sum = frame_counter
-                          + {{9{1'b0}}, step_size[2]}
-                          + {{8{1'b0}}, frac_sum[2]};
+    wire [9:0] counter_sum = frame_counter + {9'b0, step_size[2]} + {9'b0, frac_sum[2]};
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            frame_counter  <= 0;
+            frame_counter <= 0;
             subframe_accum <= 0;
         end else if (pattern_enable && next_frame) begin
-            frame_counter  <= counter_sum;
+            frame_counter <= counter_sum;
             subframe_accum <= frac_sum[1:0];
         end
     end
@@ -40,7 +38,7 @@ module radient_gradient (
 
     wire [7:0] base_radius = 30 + frame_counter[7:1]; // This is what expands the pattern outwards
 
-    // Concentric ring radii (inner to outer) - Adjusted for Manhattan distance
+    // Concentric ring radii (inner to outer) - Using Manhattan distance
     wire [7:0] ring1_radius = (base_radius > 24) ? (base_radius - 24) : 0;
     wire [7:0] ring2_radius = base_radius + 24;
     wire [7:0] ring3_radius = base_radius + 48;

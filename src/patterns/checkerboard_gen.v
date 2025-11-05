@@ -19,10 +19,10 @@ module checkerboard_gen (
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            frame_offset   <= 0;
+            frame_offset <= 0;
             subpixel_accum <= 0;
         end else if (pattern_enable && next_frame) begin
-            frame_offset   <= offset_sum;
+            frame_offset <= offset_sum;
             subpixel_accum <= frac_sum[1:0];
         end
     end
