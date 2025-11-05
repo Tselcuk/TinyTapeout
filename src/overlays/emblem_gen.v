@@ -108,16 +108,20 @@ module emblem_gen (
         reg [5:0] row_idx;
         reg [5:0] col_idx;
         reg [LION_WIDTH_PIX-1:0] mask;
+        reg [9:0] row_offset_temp;
+        reg [9:0] col_offset_flipped_temp;
         begin
             is_lion_pixel = 0;
             if ((py >= origin_y) && (py < origin_y + LION_HEIGHT) && (px >= origin_x) && (px < origin_x + LION_WIDTH)) begin
-                row_offset = py - origin_y;
+                row_offset_temp = py - origin_y;
+                row_offset = row_offset_temp[5:0];
                 col_offset = px - origin_x;
-                row_idx = row_offset[5:0];
+                row_idx = row_offset;
                 mask = lion_row(row_idx);
                 // Flip horizontally: mirror column index
-                col_offset_flipped = LION_WIDTH - 1 - col_offset;
-                col_idx = col_offset_flipped[5:0];
+                col_offset_flipped_temp = LION_WIDTH - 1 - col_offset;
+                col_offset_flipped = col_offset_flipped_temp[5:0];
+                col_idx = col_offset_flipped;
                 is_lion_pixel = mask[col_idx];
             end
         end
