@@ -50,8 +50,8 @@ module text_gen (
     wire [9:0] line1_y0 = line1_y0_ext[9:0];
     wire [9:0] line1_y1 = line1_y0 + CHAR_HEIGHT_PX;
 
-    function automatic bit line0_pixel(input [3:0] row, input [9:0] x_rel);
-        bit hit;
+    function [0:0] line0_pixel(input [3:0] row, input [9:0] x_rel);
+        reg hit;
         case (row)
             4'd0: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd20) && (x_rel <= 10'd27)) || ((x_rel >= 10'd34) && (x_rel <= 10'd45)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd75)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd100) && (x_rel <= 10'd107)) || ((x_rel >= 10'd116) && (x_rel <= 10'd123));
             4'd1: hit = (x_rel <= 10'd1) || ((x_rel >= 10'd14) && (x_rel <= 10'd15)) || ((x_rel >= 10'd20) && (x_rel <= 10'd27)) || ((x_rel >= 10'd34) && (x_rel <= 10'd45)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd75)) || ((x_rel >= 10'd82) && (x_rel <= 10'd83)) || ((x_rel >= 10'd100) && (x_rel <= 10'd107)) || ((x_rel >= 10'd116) && (x_rel <= 10'd123));
@@ -69,11 +69,11 @@ module text_gen (
             4'd13: hit = (x_rel <= 10'd3) || ((x_rel >= 10'd12) && (x_rel <= 10'd15)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd38) && (x_rel <= 10'd41)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd100) && (x_rel <= 10'd107)) || ((x_rel >= 10'd116) && (x_rel <= 10'd123));
             default: hit = 1'b0;
         endcase
-        return hit;
+        line0_pixel = hit;
     endfunction
 
-    function automatic bit line1_pixel(input [3:0] row, input [9:0] x_rel);
-        bit hit;
+    function [0:0] line1_pixel(input [3:0] row, input [9:0] x_rel);
+        reg hit;
         case (row)
             4'd0: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd13)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd36) && (x_rel <= 10'd43)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd98) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd123)) || ((x_rel >= 10'd130) && (x_rel <= 10'd141)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd164) && (x_rel <= 10'd171));
             4'd1: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd13)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd36) && (x_rel <= 10'd43)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd98) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd123)) || ((x_rel >= 10'd130) && (x_rel <= 10'd141)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd164) && (x_rel <= 10'd171));
@@ -91,7 +91,7 @@ module text_gen (
             4'd13: hit = ((x_rel >= 10'd2) && (x_rel <= 10'd13)) || ((x_rel >= 10'd18) && (x_rel <= 10'd19)) || ((x_rel >= 10'd28) && (x_rel <= 10'd29)) || ((x_rel >= 10'd36) && (x_rel <= 10'd43)) || ((x_rel >= 10'd50) && (x_rel <= 10'd61)) || ((x_rel >= 10'd66) && (x_rel <= 10'd67)) || ((x_rel >= 10'd76) && (x_rel <= 10'd77)) || ((x_rel >= 10'd82) && (x_rel <= 10'd93)) || ((x_rel >= 10'd98) && (x_rel <= 10'd109)) || ((x_rel >= 10'd114) && (x_rel <= 10'd115)) || ((x_rel >= 10'd124) && (x_rel <= 10'd125)) || ((x_rel >= 10'd130) && (x_rel <= 10'd141)) || ((x_rel >= 10'd146) && (x_rel <= 10'd147)) || ((x_rel >= 10'd156) && (x_rel <= 10'd157)) || ((x_rel >= 10'd164) && (x_rel <= 10'd171));
             default: hit = 1'b0;
         endcase
-        return hit;
+        line1_pixel = hit;
     endfunction
 
     always @(*) begin
