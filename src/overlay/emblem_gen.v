@@ -11,7 +11,6 @@ module emblem_gen(
     localparam [9:0] EMBLEM_Y0 = 144;
     localparam [9:0] EMBLEM_Y1 = 320;
     localparam [9:0] EMBLEM_CENTER_X = (EMBLEM_X0 + EMBLEM_X1) >> 1;
-    localparam [9:0] HALF_WIDTH = (EMBLEM_X1 - EMBLEM_X0) >> 1;
 
     localparam [5:0] COLOR_BLACK = 6'b000000;
     localparam [5:0] COLOR_GOLD = 6'b110110;
@@ -83,13 +82,14 @@ module emblem_gen(
     endfunction
 
     wire is_lion_pixel;
+    /* verilator lint_off UNUSEDSIGNAL */
     reg [9:0] lion_col_offset;
     reg [9:0] lion_row_offset;
+    /* verilator lint_on UNUSEDSIGNAL */
     reg lion_box_hit;
 
     always @(*) begin
         lion_box_hit = 1'b0;
-        // Default assignments to prevent latches
         lion_col_offset = 0;
         lion_row_offset = 0;
 
