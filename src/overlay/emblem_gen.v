@@ -14,20 +14,20 @@ module emblem_gen (
     localparam [9:0] HALF_WIDTH = (EMBLEM_X1 - EMBLEM_X0) >> 1;
 
     localparam [5:0] COLOR_BORDER = 6'b000000;
-    localparam [5:0] COLOR_GOLD   = 6'b111100;
-    localparam [5:0] COLOR_WHITE  = 6'b111111;
-    localparam [5:0] COLOR_RED    = 6'b110000;
+    localparam [5:0] COLOR_GOLD = 6'b111100;
+    localparam [5:0] COLOR_WHITE = 6'b111111;
+    localparam [5:0] COLOR_RED = 6'b110000;
 
-    localparam [9:0] BORDER_THICKNESS  = 3;
+    localparam [9:0] BORDER_THICKNESS = 3;
 
-    localparam integer LION_WIDTH_PIX  = 48;
-    localparam [9:0] LION_WIDTH        = 48;
-    localparam [9:0] LION_HEIGHT       = 45;
-    localparam [9:0] TOP_LION_Y        = EMBLEM_Y0 + 16;
-    localparam [9:0] BOTTOM_LION_Y     = EMBLEM_Y0 + 112;
-    localparam [9:0] LEFT_LION_X       = EMBLEM_X0 + 20;
-    localparam [9:0] RIGHT_LION_X      = EMBLEM_X1 - 20 - LION_WIDTH;
-    localparam [9:0] CENTER_LION_X     = EMBLEM_CENTER_X - (LION_WIDTH >> 1);
+    localparam integer LION_WIDTH_PIX = 48;
+    localparam [9:0] LION_WIDTH = 48;
+    localparam [9:0] LION_HEIGHT = 45;
+    localparam [9:0] TOP_LION_Y = EMBLEM_Y0 + 16;
+    localparam [9:0] BOTTOM_LION_Y = EMBLEM_Y0 + 112;
+    localparam [9:0] LEFT_LION_X = EMBLEM_X0 + 20;
+    localparam [9:0] RIGHT_LION_X = EMBLEM_X1 - 20 - LION_WIDTH;
+    localparam [9:0] CENTER_LION_X = EMBLEM_CENTER_X - (LION_WIDTH >> 1);
 
     function [LION_WIDTH_PIX-1:0] lion_row;
         input [5:0] idx;
@@ -139,9 +139,9 @@ module emblem_gen (
 
     wire [9:0] abs_dx = (x >= EMBLEM_CENTER_X) ? (x - EMBLEM_CENTER_X) : (EMBLEM_CENTER_X - x);
     wire [9:0] rel_y = y - EMBLEM_Y0;
-    wire top_left_lion  = is_lion_pixel(x, y, LEFT_LION_X, TOP_LION_Y);
+    wire top_left_lion = is_lion_pixel(x, y, LEFT_LION_X, TOP_LION_Y);
     wire top_right_lion = is_lion_pixel(x, y, RIGHT_LION_X, TOP_LION_Y);
-    wire bottom_lion    = is_lion_pixel(x, y, CENTER_LION_X, BOTTOM_LION_Y);
+    wire bottom_lion = is_lion_pixel(x, y, CENTER_LION_X, BOTTOM_LION_Y);
 
     reg [5:0] color_sel;
     reg draw_flag;
