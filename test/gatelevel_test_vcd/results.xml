@@ -1,6 +1,0 @@
-<testsuites name="results">
-  <testsuite name="all" package="all">
-    <property name="random_seed" value="1759362032" />
-    <testcase name="test_counter_reset_increment_load_tristate" classname="test" file="/home/runner/work/TinyTapeout/TinyTapeout/test/test.py" lineno="9" time="0.011021137237548828" sim_time_ns="150000.001" ratio_time="13610210.794667589" />
-  </testsuite>
-</testsuites>
