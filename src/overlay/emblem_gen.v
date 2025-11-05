@@ -120,118 +120,60 @@ module emblem_gen(
     // Look up the pixel from the bitmap ROM only if it was inside one of the lion boxes
     assign is_lion_pixel = lion_box_hit ? lion_row(lion_row_offset[5:0])[lion_col_offset[5:0]] : 1'b0;
 
-    function automatic [6:0] shield_width_rom;
+    function automatic [6:0] shield_width;
         input [7:0] y_addr;
-        reg [6:0] shield_width;
         begin
-            case (y_addr)
-                // Widths start to decrease by 1 every 5 rows from here
-                8'd78:  shield_width = 7'd77;
-                8'd79:  shield_width = 7'd77;
-                8'd80:  shield_width = 7'd77;
-                8'd81:  shield_width = 7'd77;
-                8'd82:  shield_width = 7'd77;
-                8'd83:  shield_width = 7'd76;
-                8'd84:  shield_width = 7'd76;
-                8'd85:  shield_width = 7'd76;
-                8'd86:  shield_width = 7'd76;
-                8'd87:  shield_width = 7'd76;
-                // Widths start to decrease by 1 every 4 rows from here
-                8'd88:  shield_width = 7'd75;
-                8'd89:  shield_width = 7'd75;
-                8'd90:  shield_width = 7'd75;
-                8'd91:  shield_width = 7'd75;
-                8'd92:  shield_width = 7'd74;
-                8'd93:  shield_width = 7'd74;
-                8'd94:  shield_width = 7'd74;
-                8'd95:  shield_width = 7'd74;
-                // Widths start to decrease by 1 every 3 rows from here
-                8'd96:  shield_width = 7'd73;
-                8'd97:  shield_width = 7'd73;
-                8'd98:  shield_width = 7'd73;
-                8'd99:  shield_width = 7'd72;
-                8'd100: shield_width = 7'd72;
-                8'd101: shield_width = 7'd72;
-                8'd102: shield_width = 7'd71;
-                8'd103: shield_width = 7'd71;
-                8'd104: shield_width = 7'd71;
-                8'd105: shield_width = 7'd70;
-                8'd106: shield_width = 7'd70;
-                8'd107: shield_width = 7'd70;
-                8'd108: shield_width = 7'd69;
-                8'd109: shield_width = 7'd69;
-                8'd110: shield_width = 7'd69;
-                8'd111: shield_width = 7'd68;
-                8'd112: shield_width = 7'd68;
-                8'd113: shield_width = 7'd68;
-                8'd114: shield_width = 7'd67;
-                8'd115: shield_width = 7'd67;
-                8'd116: shield_width = 7'd67;
-                8'd117: shield_width = 7'd66;
-                8'd118: shield_width = 7'd66;
-                8'd119: shield_width = 7'd66;
-                8'd120: shield_width = 7'd65;
-                8'd121: shield_width = 7'd65;
-                8'd122: shield_width = 7'd65;
-                8'd123: shield_width = 7'd64;
-                8'd124: shield_width = 7'd64;
-                8'd125: shield_width = 7'd64;
-                // Widths start to decrease by 1 every 2 rows from here
-                8'd126: shield_width = 7'd63;
-                8'd127: shield_width = 7'd63;
-                8'd128: shield_width = 7'd62;
-                8'd129: shield_width = 7'd62;
-                8'd130: shield_width = 7'd61;
-                8'd131: shield_width = 7'd61;
-                8'd132: shield_width = 7'd60;
-                8'd133: shield_width = 7'd60;
-                8'd134: shield_width = 7'd59;
-                8'd135: shield_width = 7'd59;
-                8'd136: shield_width = 7'd58;
-                8'd137: shield_width = 7'd58;
-                8'd138: shield_width = 7'd57;
-                8'd139: shield_width = 7'd57;
-                8'd140: shield_width = 7'd56;
-                8'd141: shield_width = 7'd56;
-                8'd142: shield_width = 7'd55;
-                8'd143: shield_width = 7'd55;
-                8'd144: shield_width = 7'd54;
-                8'd145: shield_width = 7'd54;
-                // Widths start to decrease by 1 each row from here
-                8'd146: shield_width = 7'd53;
-                8'd147: shield_width = 7'd52;
-                8'd148: shield_width = 7'd51;
-                8'd149: shield_width = 7'd50;
-                8'd150: shield_width = 7'd49;
-                8'd151: shield_width = 7'd48;
-                8'd152: shield_width = 7'd47;
-                8'd153: shield_width = 7'd46;
-                8'd154: shield_width = 7'd45;
-                8'd155: shield_width = 7'd44;
-                // Widths start to decrease by 2 each row from here 20x times
-                8'd156: shield_width = 7'd42;
-                8'd157: shield_width = 7'd40;
-                8'd158: shield_width = 7'd38;
-                8'd159: shield_width = 7'd36;
-                8'd160: shield_width = 7'd34;
-                8'd161: shield_width = 7'd32;
-                8'd162: shield_width = 7'd30;
-                8'd163: shield_width = 7'd28;
-                8'd164: shield_width = 7'd26;
-                8'd165: shield_width = 7'd24;
-                8'd166: shield_width = 7'd22;
-                8'd167: shield_width = 7'd20;
-                8'd168: shield_width = 7'd18;
-                8'd169: shield_width = 7'd16;
-                8'd170: shield_width = 7'd14;
-                8'd171: shield_width = 7'd12;
-                8'd172: shield_width = 7'd10;
-                8'd173: shield_width = 7'd8;
-                8'd174: shield_width = 7'd6;
-                8'd175: shield_width = 7'd4;
-                default: shield_width = 7'd78;
-            endcase
-            shield_width_rom = shield_width;
+            shield_width = 7'd78;
+
+            if (y_addr < 8'd88) begin
+                shield_width = (y_addr < 8'd83) ? 7'd77 : 7'd76;
+            end else if (y_addr < 8'd96) begin
+                shield_width = (y_addr < 8'd92) ? 7'd75 : 7'd74;
+            end else if (y_addr < 8'd99) begin
+                shield_width = 7'd73;
+            end else if (y_addr < 8'd102) begin
+                shield_width = 7'd72;
+            end else if (y_addr < 8'd105) begin
+                shield_width = 7'd71;
+            end else if (y_addr < 8'd108) begin
+                shield_width = 7'd70;
+            end else if (y_addr < 8'd111) begin
+                shield_width = 7'd69;
+            end else if (y_addr < 8'd114) begin
+                shield_width = 7'd68;
+            end else if (y_addr < 8'd117) begin
+                shield_width = 7'd67;
+            end else if (y_addr < 8'd120) begin
+                shield_width = 7'd66;
+            end else if (y_addr < 8'd123) begin
+                shield_width = 7'd65;
+            end else if (y_addr < 8'd126) begin
+                shield_width = 7'd64;
+            end else if (y_addr < 8'd128) begin
+                shield_width = 7'd63;
+            end else if (y_addr < 8'd130) begin
+                shield_width = 7'd62;
+            end else if (y_addr < 8'd132) begin
+                shield_width = 7'd61;
+            end else if (y_addr < 8'd134) begin
+                shield_width = 7'd60;
+            end else if (y_addr < 8'd136) begin
+                shield_width = 7'd59;
+            end else if (y_addr < 8'd138) begin
+                shield_width = 7'd58;
+            end else if (y_addr < 8'd140) begin
+                shield_width = 7'd57;
+            end else if (y_addr < 8'd142) begin
+                shield_width = 7'd56;
+            end else if (y_addr < 8'd144) begin
+                shield_width = 7'd55;
+            end else if (y_addr < 8'd146) begin
+                shield_width = 7'd54;
+            end else if (y_addr < 8'd156) begin
+                shield_width = 7'd53 - 7'(y_addr - 8'd146);
+            end else begin
+                shield_width = 7'd42 - 7'((y_addr - 8'd156) << 1);
+            end
         end
     endfunction
 
@@ -252,7 +194,7 @@ module emblem_gen(
         rgb = 6'b000000;
 
         if (active && (y >= EMBLEM_Y0) && (y < EMBLEM_Y1)) begin
-            half_width = shield_width_rom(rel_y[7:0]);
+            half_width = shield_width(rel_y[7:0]);
             if (abs_dx <= {3'b0, half_width}) begin
                 draw_flag = 1;
                 rgb = COLOR_GOLD;
