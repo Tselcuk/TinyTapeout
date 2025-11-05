@@ -15,7 +15,6 @@ module emblem_gen(
 
     localparam [5:0] COLOR_BLACK = 6'b000000;
     localparam [5:0] COLOR_GOLD = 6'b110110;
-    localparam [5:0] COLOR_WHITE = 6'b111111;
     localparam [5:0] COLOR_RED = 6'b100100;
 
     localparam [9:0] BORDER_THICKNESS = 3;
