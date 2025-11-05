@@ -15,9 +15,7 @@ module checkerboard_gen (
     reg [1:0] subpixel_accum;
 
     wire [2:0] frac_sum = {1'b0, subpixel_accum} + {1'b0, step_size[1:0]};
-    wire [7:0] offset_sum = frame_offset
-                          + {{7{1'b0}}, step_size[2]}
-                          + {{7{1'b0}}, frac_sum[2]};
+    wire [7:0] offset_sum = frame_offset + {5'b0, step_size[2], 1'b0} + {5'b0, frac_sum[2], 1'b0};
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
