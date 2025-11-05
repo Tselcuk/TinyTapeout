@@ -25,11 +25,11 @@ module emblem_gen (
 
     localparam [9:0] SHIELD_HEIGHT     = EMBLEM_Y1 - EMBLEM_Y0;
     localparam [9:0] BORDER_THICKNESS  = 3;
-    localparam [9:0] CHEVRON_APEX         = 70;
+    localparam [9:0] CHEVRON_APEX         = 56;
     localparam [9:0] CHEVRON_HEIGHT       = 56;
     localparam [9:0] CHEVRON_BORDER_WIDTH = 8;
     localparam [9:0] CHEVRON_WHITE_WIDTH  = 20;
-    localparam [9:0] CHEVRON_EDGE_MARGIN  = 2;
+    localparam [9:0] CHEVRON_EDGE_MARGIN  = 0;
     localparam [9:0] CHEVRON_BOTTOM_Y_REL = CHEVRON_APEX + CHEVRON_HEIGHT - 1;
     localparam [9:0] CHEVRON_HEIGHT_MINUS1 = CHEVRON_HEIGHT - 1;
     localparam [19:0] CHEVRON_HEIGHT_DENOM = {{10{1'b0}}, CHEVRON_HEIGHT_MINUS1};
@@ -49,84 +49,78 @@ module emblem_gen (
         input [5:0] idx;
         begin
             case (idx)
-                6'd0: lion_row = 48'h03F000000000;
-                6'd1: lion_row = 48'h03F000000000;
-                6'd2: lion_row = 48'h07FC00000000;
-                6'd3: lion_row = 48'h1FFE00000000;
-                6'd4: lion_row = 48'h1FFE00000000;
-                6'd5: lion_row = 48'h3FFF80C00000;
-                6'd6: lion_row = 48'hFFFFC1E00000;
-                6'd7: lion_row = 48'hFFFFC1E00000;
-                6'd8: lion_row = 48'h1FEFFFF8F000;
-                6'd9: lion_row = 48'h3FE3FFFCF180;
-                6'd10: lion_row = 48'h3FE3FFFCF180;
-                6'd11: lion_row = 48'hFF81FFFCFF80;
-                6'd12: lion_row = 48'hFF007FFC7F80;
-                6'd13: lion_row = 48'hFF007FFC7F80;
-                6'd14: lion_row = 48'hFC003FFC7F80;
-                6'd15: lion_row = 48'hFC003FFC7F80;
-                6'd16: lion_row = 48'hFC003FFC7F80;
-                6'd17: lion_row = 48'hFC003FFCFF80;
-                6'd18: lion_row = 48'hFF007FFCFF80;
-                6'd19: lion_row = 48'hFF007FFCFF80;
-                6'd20: lion_row = 48'hFFFFFFFFFFC0;
-                6'd21: lion_row = 48'hFFFFF1FFFFC0;
-                6'd22: lion_row = 48'hFFFFF1FFFFC0;
-                6'd23: lion_row = 48'hFFFFC1FFFF80;
-                6'd24: lion_row = 48'hFFFF81FFFE00;
-                6'd25: lion_row = 48'hFFFF81FFFE00;
-                6'd26: lion_row = 48'h3FFE00FFFC00;
-                6'd27: lion_row = 48'h1FF000FFF078;
-                6'd28: lion_row = 48'h1FF000FFF078;
-                6'd29: lion_row = 48'h07F001FFF3F8;
-                6'd30: lion_row = 48'h03FC01FFFFFF;
-                6'd31: lion_row = 48'h03FC01FFFFFF;
-                6'd32: lion_row = 48'h00FF81FFFFF8;
-                6'd33: lion_row = 48'h007FC1FFFFF0;
-                6'd34: lion_row = 48'h007FC1FFFFF0;
-                6'd35: lion_row = 48'h001FC1FFFE00;
-                6'd36: lion_row = 48'h000FC0FFFC00;
-                6'd37: lion_row = 48'h000FC0FFFC00;
-                6'd38: lion_row = 48'h0003C03FE000;
-                6'd39: lion_row = 48'h0001C01F8000;
-                6'd40: lion_row = 48'h0001C01F8000;
-                6'd41: lion_row = 48'h000040038000;
-                6'd42: lion_row = 48'h000000000000;
-                6'd43: lion_row = 48'h000000000000;
-                6'd44: lion_row = 48'h000000000000;
+                6'd0:  lion_row = 48'h000000380000;
+                6'd1:  lion_row = 48'h000003F80000;
+                6'd2:  lion_row = 48'h000007FF0004;
+                6'd3:  lion_row = 48'h00000FFF404C;
+                6'd4:  lion_row = 48'h07003FFF805C;
+                6'd5:  lion_row = 48'h1F833FFF81FC;
+                6'd6:  lion_row = 48'h3F831FFFE3FC;
+                6'd7:  lion_row = 48'h1F8399FF87F8;
+                6'd8:  lion_row = 48'h3FC3FFFF8FF8;
+                6'd9:  lion_row = 48'h7FE003FFCFF0;
+                6'd10: lion_row = 48'h0FF80FFFEF80;
+                6'd11: lion_row = 48'h1FFD33FF8F0C;
+                6'd12: lion_row = 48'h09FFFFFF8E0C;
+                6'd13: lion_row = 48'h01FFFFFFCCFC;
+                6'd14: lion_row = 48'h01FFFFFFCCFC;
+                6'd15: lion_row = 48'h00FFFFFE07F8;
+                6'd16: lion_row = 48'h00BFFFFE07F0;
+                6'd17: lion_row = 48'h001FFFFF03C0;
+                6'd18: lion_row = 48'h003FFFF8018C;
+                6'd19: lion_row = 48'h003FFFFC019C;
+                6'd20: lion_row = 48'h007FFFFC00FC;
+                6'd21: lion_row = 48'h01F7FFF400F8;
+                6'd22: lion_row = 48'h3FFE03FC0070;
+                6'd23: lion_row = 48'h7FFFFFFF0070;
+                6'd24: lion_row = 48'h3FFFFFFF8030;
+                6'd25: lion_row = 48'hFFFFFFFFE030;
+                6'd26: lion_row = 48'hFFF25FFFF010;
+                6'd27: lion_row = 48'h3F11007FF810;
+                6'd28: lion_row = 48'h1F0001FFFC30;
+                6'd29: lion_row = 48'h1A001FFFFC30;
+                6'd30: lion_row = 48'h00007FFFF8E0;
+                6'd31: lion_row = 48'h00007FFFFFC0;
+                6'd32: lion_row = 48'h0000FFFFFC00;
+                6'd33: lion_row = 48'h0000FF7FE000;
+                6'd34: lion_row = 48'h0000FF7FE000;
+                6'd35: lion_row = 48'h0000FF7FE000;
+                6'd36: lion_row = 48'h0000FE7FFE00;
+                6'd37: lion_row = 48'h0031FE3FFF00;
+                6'd38: lion_row = 48'h007BFE07FF80;
+                6'd39: lion_row = 48'h007FFC02FF80;
+                6'd40: lion_row = 48'h00FFD800FF80;
+                6'd41: lion_row = 48'h01FF9000FF80;
+                6'd42: lion_row = 48'h007E0000FF00;
+                6'd43: lion_row = 48'h007E0031FC00;
+                6'd44: lion_row = 48'h0046003FE800;
                 default: lion_row = 48'h000000000000;
             endcase
         end
     endfunction
 
-    function is_lion_pixel_with_mirror;
+    function is_lion_pixel;
         input [9:0] px;
         input [9:0] py;
         input [9:0] origin_x;
         input [9:0] origin_y;
-        input mirror;
         reg [9:0] row_offset;
         reg [9:0] col_offset;
-        reg [9:0] row_idx_ext;
-        reg [9:0] col_idx_ext;
+        reg [9:0] col_offset_flipped;
         reg [5:0] row_idx;
-        reg [5:0] col_idx_final;
+        reg [5:0] col_idx;
         reg [LION_WIDTH_PIX-1:0] mask;
         begin
-            is_lion_pixel_with_mirror = 0;
+            is_lion_pixel = 0;
             if ((py >= origin_y) && (py < origin_y + LION_HEIGHT) && (px >= origin_x) && (px < origin_x + LION_WIDTH)) begin
                 row_offset = py - origin_y;
                 col_offset = px - origin_x;
-                row_idx_ext = LION_HEIGHT - 1 - row_offset;
-                row_idx = row_idx_ext[5:0];
+                row_idx = row_offset[5:0];
                 mask = lion_row(row_idx);
-                if (mirror) begin
-                    col_idx_ext = LION_WIDTH - 1 - col_offset;
-                    col_idx_final = col_idx_ext[5:0];
-                end else begin
-                    col_idx_final = col_offset[5:0];
-                end
-                is_lion_pixel_with_mirror = mask[col_idx_final];
+                // Flip horizontally: mirror column index
+                col_offset_flipped = LION_WIDTH - 1 - col_offset;
+                col_idx = col_offset_flipped[5:0];
+                is_lion_pixel = mask[col_idx];
             end
         end
     endfunction
@@ -161,9 +155,9 @@ module emblem_gen (
 
     wire [9:0] abs_dx = (x >= EMBLEM_CENTER_X) ? (x - EMBLEM_CENTER_X) : (EMBLEM_CENTER_X - x);
     wire [9:0] rel_y = y - EMBLEM_Y0;
-    wire top_left_lion  = is_lion_pixel_with_mirror(x, y, LEFT_LION_X, TOP_LION_Y, 0);
-    wire top_right_lion = is_lion_pixel_with_mirror(x, y, RIGHT_LION_X, TOP_LION_Y, 0);
-    wire bottom_lion    = is_lion_pixel_with_mirror(x, y, CENTER_LION_X, BOTTOM_LION_Y, 0);
+    wire top_left_lion  = is_lion_pixel(x, y, LEFT_LION_X, TOP_LION_Y);
+    wire top_right_lion = is_lion_pixel(x, y, RIGHT_LION_X, TOP_LION_Y);
+    wire bottom_lion    = is_lion_pixel(x, y, CENTER_LION_X, BOTTOM_LION_Y);
 
     reg [5:0] color_sel;
     reg draw_flag;
@@ -180,6 +174,9 @@ module emblem_gen (
         reg [9:0] chevron_width_limit;
         reg [19:0] scaled_outer;
         reg [19:0] outer_width_ext;
+        reg [9:0] border_outer;
+        reg [9:0] border_inner;
+        reg [9:0] border_core;
         reg shield_border;
         reg chevron_border;
         reg chevron_fill;
@@ -195,6 +192,9 @@ module emblem_gen (
         chevron_width_limit = 0;
         scaled_outer = 0;
         outer_width_ext = 0;
+        border_outer = 0;
+        border_inner = 0;
+        border_core = 0;
         shield_border = 0;
         chevron_border = 0;
         chevron_fill = 0;
@@ -231,16 +231,37 @@ module emblem_gen (
 
                     if (outer_width > half_width) outer_width = half_width;
 
-                    // Draw chevron layers
+                    // Draw chevron layers - extend white and black lines to shield border
                     white_outer = (outer_width > CHEVRON_BORDER_WIDTH) ? (outer_width - CHEVRON_BORDER_WIDTH) : 0;
                     white_inner = (white_outer > CHEVRON_WHITE_WIDTH) ? (white_outer - CHEVRON_WHITE_WIDTH) : 0;
                     inner_core = (white_inner > CHEVRON_BORDER_WIDTH) ? (white_inner - CHEVRON_BORDER_WIDTH) : 0;
 
-                    if (abs_dx <= outer_width) begin
-                        if (abs_dx >= white_outer) chevron_border = 1;
-                        else if (abs_dx >= white_inner) chevron_fill = 1;
-                        else if (abs_dx >= inner_core) chevron_border = 1;
-                        // else: center remains gold (default color_sel)
+                    // Extend borders to shield edge
+                    if (abs_dx <= half_width) begin
+                        if (abs_dx <= outer_width) begin
+                            // Inside chevron shape
+                            if (abs_dx >= white_outer) chevron_border = 1;
+                            else if (abs_dx >= white_inner) chevron_fill = 1;
+                            else if (abs_dx >= inner_core) chevron_border = 1;
+                            // else: center remains gold (default color_sel)
+                        end else begin
+                            // Extend border lines beyond chevron to shield edge
+                            // Calculate which border zone we're in
+                            if (half_width > CHEVRON_BORDER_WIDTH) begin
+                                border_outer = half_width - CHEVRON_BORDER_WIDTH;
+                                if (abs_dx >= border_outer) chevron_border = 1;
+                                else if (border_outer > CHEVRON_WHITE_WIDTH) begin
+                                    border_inner = border_outer - CHEVRON_WHITE_WIDTH;
+                                    if (abs_dx >= border_inner && border_inner > CHEVRON_BORDER_WIDTH) begin
+                                        border_core = border_inner - CHEVRON_BORDER_WIDTH;
+                                        if (abs_dx >= border_core) chevron_border = 1;
+                                        else chevron_fill = 1;
+                                    end else if (abs_dx >= border_inner) begin
+                                        chevron_fill = 1;
+                                    end
+                                end
+                            end
+                        end
                     end
                 end
 
