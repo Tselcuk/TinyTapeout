@@ -1,20 +1,11 @@
-<!---
-
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
-
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
-
 ## How it works
 
-Explain how your project works
+WATpixels generates a VGA display output at 640×480 resolution with 60Hz refresh rate. The design combines animated pattern layers (checkerboard and gradient patterns) with a Waterloo Engineering emblem overlay. A speed controller allows adjusting animation speed, and pause/resume controls are available.
 
 ## How to test
 
-Explain how to use your project
+Connect to a VGA display using the output pins (hsync, vsync, and RGB signals). The module runs at 25.2 MHz and automatically generates the display patterns. Use input pins to control speed and pause/resume functionality.
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+VGA display (640×480, 60Hz)
