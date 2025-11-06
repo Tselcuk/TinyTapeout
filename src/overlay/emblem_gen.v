@@ -118,7 +118,8 @@ module emblem_gen(
     end
 
     // Look up the pixel from the bitmap ROM only if it was inside one of the lion boxes
-    assign is_lion_pixel = lion_box_hit ? lion_row(lion_row_offset[5:0])[lion_col_offset[5:0]] : 1'b0;
+    wire [LION_WIDTH_PIX-1:0] lion_row_data = lion_row(lion_row_offset[5:0]);
+    assign is_lion_pixel = lion_box_hit ? lion_row_data[lion_col_offset[5:0]] : 1'b0;
 
     function automatic [6:0] shield_width;
         input [7:0] y_addr;
