@@ -12,9 +12,11 @@ module pattern_selector (
 );
     localparam [1:0] PATTERN_CHECKERBOARD = 0;
     localparam [1:0] PATTERN_RADIENT = 1;
+    localparam [1:0] PATTERN_SPIRAL = 2;
     localparam [9:0] FRAMES_CHECKERBOARD = 240;
     localparam [9:0] FRAMES_RADIENT = 480;
-    localparam [1:0] PATTERN_LAST = PATTERN_RADIENT;
+    localparam [9:0] FRAMES_SPIRAL = 360;
+    localparam [1:0] PATTERN_LAST = PATTERN_SPIRAL;
 
     reg [1:0] pattern_select;
     reg switch_pending;
@@ -22,10 +24,14 @@ module pattern_selector (
 
     wire [5:0] checkboard_rgb;
     wire [5:0] radient_rgb;
+    wire [5:0] spiral_rgb;
 
     wire checkerboard_selected = (pattern_select == PATTERN_CHECKERBOARD);
     wire radient_selected = (pattern_select == PATTERN_RADIENT);
-    wire [9:0] frames_for_current_pattern = (pattern_select == PATTERN_CHECKERBOARD) ? FRAMES_CHECKERBOARD : FRAMES_RADIENT;
+    wire spiral_selected = (pattern_select == PATTERN_SPIRAL);
+    wire [9:0] frames_for_current_pattern = (pattern_select == PATTERN_CHECKERBOARD) ? FRAMES_CHECKERBOARD :
+                                             (pattern_select == PATTERN_RADIENT) ? FRAMES_RADIENT :
+                                             FRAMES_SPIRAL;
 
     // Track VGA frame advances and defer pattern switches to the next frame origin.
     // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse).
@@ -87,10 +93,23 @@ module pattern_selector (
         .rgb(radient_rgb)
     );
 
+    spiral_gen u_spiral_gen(
+        .clk(clk),
+        .rst(rst),
+        .pattern_enable(spiral_selected),
+        .x(x),
+        .y(y),
+        .active(spiral_selected ? active : 0),
+        .next_frame(spiral_selected ? animation_trigger : 0),
+        .step_size(step_size),
+        .rgb(spiral_rgb)
+    );
+
     always @(*) begin
         case (pattern_select)
             PATTERN_CHECKERBOARD: rgb = checkboard_rgb;
             PATTERN_RADIENT: rgb = radient_rgb;
+            PATTERN_SPIRAL: rgb = spiral_rgb;
             default: rgb = 6'b000000;
         endcase
     end
