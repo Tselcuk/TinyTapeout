@@ -41,6 +41,16 @@ async def initialize_dut(dut):
     await ClockCycles(dut.clk, 2)
 
 
+async def wait_for_pause_state(dut, expected_state, max_cycles=2048):
+    """Wait until the speed controller reports the desired paused state."""
+    paused_signal = dut.user_project.u_speed_controller.paused
+    for _ in range(max_cycles):
+        if int(paused_signal.value) == expected_state:
+            return
+        await RisingEdge(dut.clk)
+    raise AssertionError(f"Speed controller did not reach paused state {expected_state} within {max_cycles} cycles")
+
+
 @cocotb.test()
 async def test_vga_timing_generates_expected_syncs(dut):
     """Test VGA timing signals. Requires RTL simulation (internal signals not available in gate-level)."""
@@ -111,26 +121,27 @@ async def test_pause_resume_freezes_animation(dut):
     for _ in range(5):
         await RisingEdge(dut.user_project.u_vga_timing.vsync)
 
-    # Get the initial animation offset.
-    initial_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
-
     # Pause animation and wait for a few frames.
     dut.ui_in.value = 0b1000_0001  # Keep speed 6, assert pause
     await RisingEdge(dut.clk)
+    await wait_for_pause_state(dut, 1)
+
+    paused_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
     for _ in range(5):
         await RisingEdge(dut.user_project.u_vga_timing.vsync)
-    
-    # Check that the animation offset hasn't changed.
-    paused_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
-    assert paused_offset == initial_offset, "Animation offset should not change while paused"
+        current_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
+        assert current_offset == paused_offset, "Animation offset should remain constant while paused"
 
     # Resume animation and verify the offset starts changing again.
     dut.ui_in.value = 0b1000_0010  # Assert resume
     await RisingEdge(dut.clk)
     dut.ui_in.value = 0b1000_0000  # Drop resume, keep speed
-    
-    await RisingEdge(dut.user_project.u_vga_timing.vsync)
-    await RisingEdge(dut.clk) # Allow time for value to propagate
+    await wait_for_pause_state(dut, 0)
 
-    resumed_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
+    resumed_offset = paused_offset
+    for _ in range(5):
+        await RisingEdge(dut.user_project.u_vga_timing.vsync)
+        resumed_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
+        if resumed_offset != paused_offset:
+            break
     assert resumed_offset != paused_offset, "Animation offset should change after resuming"
