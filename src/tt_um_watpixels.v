@@ -47,6 +47,11 @@ module tt_um_watpixels (
   // Emblem Overlay Output
   wire emblem_draw;
   wire [5:0] emblem_rgb;
+
+  // Waterloo Text Overlay Output
+  wire waterloo_draw;
+  wire [5:0] waterloo_rgb;
+
   wire [5:0] final_rgb;
 
   // Instantiate VGA Timing Generator
@@ -93,8 +98,17 @@ module tt_um_watpixels (
       .rgb(emblem_rgb)
   );
 
-  // Blend emblem overlay with pattern, emblem takes priority when it draws
-  assign final_rgb = emblem_draw ? emblem_rgb : pattern_rgb;
+  // Instantiate Waterloo Text Overlay
+  waterloo_text_gen u_waterloo_text_gen (
+      .x(x_pos),
+      .y(y_pos),
+      .active(active),
+      .draw(waterloo_draw),
+      .rgb(waterloo_rgb)
+  );
+
+  // Blend overlays with pattern, overlays take priority when they draw
+  assign final_rgb = waterloo_draw ? waterloo_rgb : (emblem_draw ? emblem_rgb : pattern_rgb);
 
   // Output Signal Mapping
   assign uo_out[0] = hsync;
