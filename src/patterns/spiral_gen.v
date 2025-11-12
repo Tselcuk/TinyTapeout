@@ -46,7 +46,9 @@ module spiral_gen (
     wire [7:0] angle = rough_angle + rotation_offset;
 
     // Create spiral by subtracting radius from angle
+    /* verilator lint_off UNUSEDSIGNAL */
     wire [8:0] spiral_phase = {1'b0, angle} - radius[9:2];
+    /* verilator lint_on UNUSEDSIGNAL */
 
     // Divide into 6 arms using upper bits
     wire [2:0] arm_index = spiral_phase[8:6];

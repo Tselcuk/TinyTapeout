@@ -23,6 +23,7 @@ project:
     - "patterns/pattern_selector.v"
     - "patterns/checkerboard_gen.v"
     - "patterns/radient_gradient.v"
+    - "patterns/spiral_gen.v"
     - "overlay/emblem_gen.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
