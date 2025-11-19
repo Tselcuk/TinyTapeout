@@ -11,11 +11,11 @@ module spiral_gen (
     output reg [5:0] rgb
 );
 
-    reg [7:0] rotation_offset;
+    reg [5:0] rotation_offset;  // Reduced from 8 to 6 bits
     reg [1:0] subframe_accum;
 
     wire [2:0] frac_sum = {1'b0, subframe_accum} + {1'b0, step_size[1:0]};
-    wire [7:0] offset_sum = rotation_offset + {5'b0, step_size[2], 1'b0} + {5'b0, frac_sum[2], 1'b0};
+    wire [5:0] offset_sum = rotation_offset + {3'b0, step_size[2], 1'b0} + {3'b0, frac_sum[2], 1'b0};
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -30,49 +30,41 @@ module spiral_gen (
     localparam [9:0] CENTER_X = 320;
     localparam [9:0] CENTER_Y = 240;
 
-    wire signed [10:0] sx = $signed({1'b0, x}) - $signed({1'b0, CENTER_X});
-    wire signed [10:0] sy = $signed({1'b0, y}) - $signed({1'b0, CENTER_Y});
+    // Unsigned arithmetic - avoid signed operations
+    wire x_lt_center = (x < CENTER_X);
+    wire y_lt_center = (y < CENTER_Y);
+    wire [9:0] dx = x_lt_center ? (CENTER_X - x) : (x - CENTER_X);
+    wire [9:0] dy = y_lt_center ? (CENTER_Y - y) : (y - CENTER_Y);
+    wire [10:0] radius = dx + dy; // Manhattan distance
 
-    wire [10:0] abs_sx = sx[10] ? -sx : sx;
-    wire [10:0] abs_sy = sy[10] ? -sy : sy;
-    wire [11:0] radius = abs_sx + abs_sy; // Manhattan distance
+    // Simplified angle sector: 3 bits from signs and comparison
+    wire dx_gt_dy = dx > dy;
+    wire [2:0] angle_sector = {~x_lt_center, ~y_lt_center, dx_gt_dy};
+    wire [5:0] rough_angle = {angle_sector, 3'b0}; // Scale to 0-56 in steps of 8
 
-    // Simple angle approximation using quadrant and comparison
-    // Quadrant (2 bits from signs) + comparison bit gives us rough 8-sector angle
-    wire [2:0] angle_sector = {~sx[10], ~sy[10], abs_sx > abs_sy};
-    wire [7:0] rough_angle = {angle_sector, 5'b0}; // Scale sector (0-7) to 0-224 in steps of 32
+    // Apply rotation offset (reduced precision)
+    wire [5:0] angle = rough_angle + rotation_offset;
 
-    // Apply rotation offset
-    wire [7:0] angle = rough_angle + rotation_offset;
-
-    // Create spiral by subtracting radius from angle
-    /* verilator lint_off UNUSEDSIGNAL */
-    wire [8:0] spiral_phase = {1'b0, angle} - radius[9:2];
-    /* verilator lint_on UNUSEDSIGNAL */
+    // Create spiral by subtracting radius from angle (reduced precision)
+    wire [6:0] radius_scaled = radius[10:4]; // Divide by 16 instead of 4
+    wire [6:0] spiral_phase = {1'b0, angle} - radius_scaled;
 
     // Divide into 6 arms using upper bits
-    wire [2:0] arm_index = spiral_phase[8:6];
-    wire in_arm = (spiral_phase[5] == 1'b0) && (arm_index < 6) && (radius > 20);
+    wire [2:0] arm_index = spiral_phase[6:4];
+    wire in_arm = (spiral_phase[3] == 1'b0) && (arm_index < 6) && (radius > 20);
 
-    // Generate color directly from arm index bits
-    // arm_index (0-5): R=bit0, G=bit1, B=bit2 (inverted pattern for variety)
+    // Simplified color generation - fewer gates
     wire [5:0] arm_color = {
-        arm_index[0] | arm_index[1],  // R high bit
-        arm_index[1] | arm_index[2],  // G high bit
-        ~arm_index[0] | arm_index[2], // B high bit
-        arm_index[0],                  // R low bit
-        arm_index[1],                  // G low bit
-        ~arm_index[0] | ~arm_index[1]  // B low bit
+        arm_index[1],           // R high bit
+        arm_index[2],           // G high bit
+        arm_index[0],           // B high bit
+        arm_index[0] ^ arm_index[1],  // R low bit
+        arm_index[1] ^ arm_index[2],  // G low bit
+        arm_index[0] ^ arm_index[2]   // B low bit
     };
 
     always @(*) begin
-        if (active && in_arm) begin
-            rgb = arm_color;
-        end else if (active) begin
-            rgb = 6'b000000;
-        end else begin
-            rgb = 6'b000000;
-        end
+        rgb = active && in_arm ? arm_color : 6'b000000;
     end
 
 endmodule
