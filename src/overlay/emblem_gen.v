@@ -82,13 +82,16 @@ module emblem_gen(
     endfunction
 
     wire is_lion_pixel;
-    /* verilator lint_off UNUSEDSIGNAL */
-    reg [9:0] lion_col_offset;
-    reg [9:0] lion_row_offset;
-    /* verilator lint_on UNUSEDSIGNAL */
+    reg [5:0] lion_col_offset;
+    reg [5:0] lion_row_offset;
     reg lion_box_hit;
 
     always @(*) begin
+        reg [9:0] temp_x_offset;
+        reg [9:0] temp_y_offset;
+
+        temp_x_offset = 0;
+        temp_y_offset = 0;
         lion_box_hit = 1'b0;
         lion_col_offset = 0;
         lion_row_offset = 0;
@@ -97,82 +100,57 @@ module emblem_gen(
         if (y >= TOP_LION_Y && y < (TOP_LION_Y + LION_HEIGHT)) begin
             // Check for top-left lion
             if (x >= LEFT_LION_X && x < (LEFT_LION_X + LION_WIDTH)) begin
-                lion_col_offset = x - LEFT_LION_X;
-                lion_row_offset = y - TOP_LION_Y;
+                temp_x_offset = x - LEFT_LION_X;
+                temp_y_offset = y - TOP_LION_Y;
+                lion_col_offset = temp_x_offset[5:0];
+                lion_row_offset = temp_y_offset[5:0];
                 lion_box_hit = 1'b1;
             // Check for top-right lion
             end else if (x >= RIGHT_LION_X && x < (RIGHT_LION_X + LION_WIDTH)) begin
-                lion_col_offset = x - RIGHT_LION_X;
-                lion_row_offset = y - TOP_LION_Y;
+                temp_x_offset = x - RIGHT_LION_X;
+                temp_y_offset = y - TOP_LION_Y;
+                lion_col_offset = temp_x_offset[5:0];
+                lion_row_offset = temp_y_offset[5:0];
                 lion_box_hit = 1'b1;
             end
         // Check if the pixel is within the Y-range of the bottom lion
         end else if (y >= BOTTOM_LION_Y && y < (BOTTOM_LION_Y + LION_HEIGHT)) begin
             // Check for bottom lion
             if (x >= CENTER_LION_X && x < (CENTER_LION_X + LION_WIDTH)) begin
-                lion_col_offset = x - CENTER_LION_X;
-                lion_row_offset = y - BOTTOM_LION_Y;
+                temp_x_offset = x - CENTER_LION_X;
+                temp_y_offset = y - BOTTOM_LION_Y;
+                lion_col_offset = temp_x_offset[5:0];
+                lion_row_offset = temp_y_offset[5:0];
                 lion_box_hit = 1'b1;
             end
         end
     end
 
     // Look up the pixel from the bitmap ROM only if it was inside one of the lion boxes
-    wire [LION_WIDTH_PIX-1:0] lion_row_data = lion_row(lion_row_offset[5:0]);
-    assign is_lion_pixel = lion_box_hit ? lion_row_data[lion_col_offset[5:0]] : 1'b0;
+    wire [LION_WIDTH_PIX-1:0] lion_row_data = lion_row(lion_row_offset);
+    assign is_lion_pixel = lion_box_hit ? lion_row_data[lion_col_offset] : 1'b0;
 
     function automatic [6:0] shield_width;
         input [7:0] y_addr;
+        reg [7:0] offset;
+        reg [6:0] term1, term2;
         begin
-            shield_width = 7'd78;
-
-            if (y_addr < 8'd88) begin
-                shield_width = (y_addr < 8'd83) ? 7'd77 : 7'd76;
-            end else if (y_addr < 8'd96) begin
-                shield_width = (y_addr < 8'd92) ? 7'd75 : 7'd74;
-            end else if (y_addr < 8'd99) begin
-                shield_width = 7'd73;
-            end else if (y_addr < 8'd102) begin
-                shield_width = 7'd72;
-            end else if (y_addr < 8'd105) begin
-                shield_width = 7'd71;
-            end else if (y_addr < 8'd108) begin
-                shield_width = 7'd70;
-            end else if (y_addr < 8'd111) begin
-                shield_width = 7'd69;
-            end else if (y_addr < 8'd114) begin
-                shield_width = 7'd68;
-            end else if (y_addr < 8'd117) begin
-                shield_width = 7'd67;
-            end else if (y_addr < 8'd120) begin
-                shield_width = 7'd66;
-            end else if (y_addr < 8'd123) begin
-                shield_width = 7'd65;
-            end else if (y_addr < 8'd126) begin
-                shield_width = 7'd64;
-            end else if (y_addr < 8'd128) begin
-                shield_width = 7'd63;
-            end else if (y_addr < 8'd130) begin
-                shield_width = 7'd62;
-            end else if (y_addr < 8'd132) begin
-                shield_width = 7'd61;
-            end else if (y_addr < 8'd134) begin
-                shield_width = 7'd60;
-            end else if (y_addr < 8'd136) begin
-                shield_width = 7'd59;
-            end else if (y_addr < 8'd138) begin
-                shield_width = 7'd58;
-            end else if (y_addr < 8'd140) begin
-                shield_width = 7'd57;
-            end else if (y_addr < 8'd142) begin
-                shield_width = 7'd56;
-            end else if (y_addr < 8'd144) begin
-                shield_width = 7'd55;
+            // Simplified piecewise linear shield shape
+            if (y_addr < 8'd96) begin
+                // Top section: width ~77-74 (gradual decrease)
+                shield_width = 7'd78 - {5'd0, y_addr[6:5]};
             end else if (y_addr < 8'd146) begin
-                shield_width = 7'd54;
+                // Middle section: linear decrease from 73 to 54
+                // Width decreases roughly 1 per 2.5 pixels, approximate as: 73 - (y-96)/3
+                offset = y_addr - 8'd96;
+                term1 = {1'd0, offset[7:2]};  // offset/4
+                term2 = {2'd0, offset[7:3]};  // offset/8
+                shield_width = 7'd73 - term1 - term2;
             end else if (y_addr < 8'd156) begin
+                // Lower section: linear decrease 53 to 43
                 shield_width = 7'd53 - 7'(y_addr - 8'd146);
             end else begin
+                // Bottom point: rapid taper
                 shield_width = 7'd42 - 7'((y_addr - 8'd156) << 1);
             end
         end
@@ -180,8 +158,6 @@ module emblem_gen(
 
     wire [9:0] abs_dx = (x >= EMBLEM_CENTER_X) ? (x - EMBLEM_CENTER_X) : (EMBLEM_CENTER_X - x);
     wire [9:0] rel_y = y - EMBLEM_Y0;
-
-    reg draw_flag;
 
     always @(*) begin
         reg [6:0] half_width;
@@ -191,13 +167,13 @@ module emblem_gen(
         half_width = 0;
         inner_half = 0;
         shield_border = 0;
-        draw_flag = 0;
+        draw = 1'b0;
         rgb = 6'b000000;
 
         if (active && (y >= EMBLEM_Y0) && (y < EMBLEM_Y1)) begin
             half_width = shield_width(rel_y[7:0]);
             if (abs_dx <= {3'b0, half_width}) begin
-                draw_flag = 1;
+                draw = 1'b1;
                 rgb = COLOR_GOLD;
 
                 inner_half = (half_width > BORDER_THICKNESS[6:0]) ? (half_width - BORDER_THICKNESS[6:0]) : 7'b0;
@@ -207,7 +183,6 @@ module emblem_gen(
                 if (shield_border) rgb = COLOR_BLACK;
             end
         end
-        draw = draw_flag;
     end
 
 endmodule

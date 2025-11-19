@@ -14,6 +14,8 @@ module vga_timing (
     localparam H_SYNC    = 96;
     localparam H_BACK    = 48;
     localparam H_TOTAL   = H_DISPLAY + H_FRONT + H_SYNC + H_BACK; // 800 pixels
+    localparam H_SYNC_START = H_DISPLAY + H_FRONT;  // 656
+    localparam H_SYNC_END = H_SYNC_START + H_SYNC;  // 752
 
     // Vertical timing parameters (in scan lines)
     localparam V_DISPLAY = 480;
@@ -21,6 +23,8 @@ module vga_timing (
     localparam V_SYNC    = 2;
     localparam V_BACK    = 33;
     localparam V_TOTAL   = V_DISPLAY + V_FRONT + V_SYNC + V_BACK; // 525 lines
+    localparam V_SYNC_START = V_DISPLAY + V_FRONT;  // 490
+    localparam V_SYNC_END = V_SYNC_START + V_SYNC;  // 492
 
     // Pixel co-ordinate counters
     always @(posedge clk or posedge rst) begin
@@ -42,7 +46,7 @@ module vga_timing (
     end
 
     assign active = (x < H_DISPLAY) && (y < V_DISPLAY);
-    assign hsync = !((x >= (H_DISPLAY + H_FRONT)) && (x < (H_DISPLAY + H_FRONT + H_SYNC)));
-    assign vsync = !((y >= (V_DISPLAY + V_FRONT)) && (y < (V_DISPLAY + V_FRONT + V_SYNC)));
+    assign hsync = !((x >= H_SYNC_START) && (x < H_SYNC_END));
+    assign vsync = !((y >= V_SYNC_START) && (y < V_SYNC_END));
 
 endmodule

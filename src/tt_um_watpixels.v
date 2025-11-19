@@ -12,22 +12,22 @@ module tt_um_watpixels (
 );
 
   // Input Signal Mapping
-  wire pause = ui_in[0];
-  wire resume = ui_in[1];
-  // We don't have to declare speed_1 because it is the default speed. If the user actually selects speed 1, it will be handled by the default case below
-  wire speed_2 = ui_in[3];
-  wire speed_3 = ui_in[4];
-  wire speed_4 = ui_in[5];
-  wire speed_5 = ui_in[6];
-  wire speed_6 = ui_in[7];
+  // ui_in[0]: pause
+  // ui_in[1]: resume
+  // ui_in[2]: speed_1 (default, not explicitly used)
+  // ui_in[3]: speed_2
+  // ui_in[4]: speed_3
+  // ui_in[5]: speed_4
+  // ui_in[6]: speed_5
+  // ui_in[7]: speed_6
 
-  // Convert speed inputs to a single speed value
+  // Convert speed inputs to a single speed value (priority encoder)
   wire [2:0] speed;
-  assign speed = speed_6 ? 6 :
-                 speed_5 ? 5 :
-                 speed_4 ? 4 :
-                 speed_3 ? 3 :
-                 speed_2 ? 2 : 1; // Default to speed 1 (speed_1 is ui_in[2])
+  assign speed = ui_in[7] ? 3'd6 :
+                 ui_in[6] ? 3'd5 :
+                 ui_in[5] ? 3'd4 :
+                 ui_in[4] ? 3'd3 :
+                 ui_in[3] ? 3'd2 : 3'd1;
 
   // VGA Timing Signals
   wire hsync;
@@ -70,8 +70,8 @@ module tt_um_watpixels (
       .clk(clk),
       .rst(rst),
       .speed(speed),
-      .pause(pause),
-      .resume(resume),
+      .pause(ui_in[0]),
+      .resume(ui_in[1]),
       .paused(paused),
       .step_size(step_size)
   );

@@ -156,19 +156,43 @@ module waterloo_text_gen(
         end
     endfunction
 
-    /* verilator lint_off UNUSEDSIGNAL */
-    wire [9:0] rel_y = y - TEXT_Y0;
-    /* verilator lint_on UNUSEDSIGNAL */
     wire [9:0] rel_x = x - TEXT_X0;
 
-    // Calculate character position using division
-    wire [9:0] char_offset = rel_x / (CHAR_WIDTH + CHAR_SPACING);
-    wire [3:0] char_pos = (char_offset < 10'd12) ? char_offset[3:0] : 4'd0;
-    wire [9:0] char_x_offset = rel_x - (char_offset * (CHAR_WIDTH + CHAR_SPACING));
+    // Calculate character position using comparison chain (cheaper than division)
+    // CHAR_WIDTH (10) + CHAR_SPACING (2) = 12 pixels per character
+    wire [3:0] char_pos =
+        (rel_x < 10'd12)  ? 4'd0 :
+        (rel_x < 10'd24)  ? 4'd1 :
+        (rel_x < 10'd36)  ? 4'd2 :
+        (rel_x < 10'd48)  ? 4'd3 :
+        (rel_x < 10'd60)  ? 4'd4 :
+        (rel_x < 10'd72)  ? 4'd5 :
+        (rel_x < 10'd84)  ? 4'd6 :
+        (rel_x < 10'd96)  ? 4'd7 :
+        (rel_x < 10'd108) ? 4'd8 :
+        (rel_x < 10'd120) ? 4'd9 :
+        (rel_x < 10'd132) ? 4'd10 :
+        (rel_x < 10'd144) ? 4'd11 : 4'd0;
+
+    // Calculate offset within character (0-11) without multiplication
+    wire [9:0] char_x_offset =
+        (char_pos == 4'd0)  ? rel_x :
+        (char_pos == 4'd1)  ? rel_x - 10'd12 :
+        (char_pos == 4'd2)  ? rel_x - 10'd24 :
+        (char_pos == 4'd3)  ? rel_x - 10'd36 :
+        (char_pos == 4'd4)  ? rel_x - 10'd48 :
+        (char_pos == 4'd5)  ? rel_x - 10'd60 :
+        (char_pos == 4'd6)  ? rel_x - 10'd72 :
+        (char_pos == 4'd7)  ? rel_x - 10'd84 :
+        (char_pos == 4'd8)  ? rel_x - 10'd96 :
+        (char_pos == 4'd9)  ? rel_x - 10'd108 :
+        (char_pos == 4'd10) ? rel_x - 10'd120 :
+        rel_x - 10'd132; // char_pos == 11
 
     // Scale down coordinates by 2 to index into base 5x7 bitmap (saves transistors)
     wire [2:0] pixel_x = char_x_offset[3:1]; // Divide by 2 to get bitmap column (0-4)
-    wire [2:0] pixel_y = rel_y[3:1];          // Divide by 2 to get bitmap row (0-6)
+    wire [9:0] temp_y_scaled = (y - TEXT_Y0) >> 1;
+    wire [2:0] pixel_y = temp_y_scaled[2:0];  // Divide by 2 to get bitmap row (0-6)
 
     // Direct lookup without intermediate char representation
     wire [4:0] char_row_data = get_char_bitmap_direct(char_pos, pixel_y);

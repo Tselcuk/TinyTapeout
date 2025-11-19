@@ -19,16 +19,12 @@ module pattern_selector (
     localparam [1:0] PATTERN_LAST = PATTERN_SPIRAL;
 
     reg [1:0] pattern_select;
-    reg switch_pending;
     reg [9:0] frame_counter;
 
     wire [5:0] checkboard_rgb;
     wire [5:0] radient_rgb;
     wire [5:0] spiral_rgb;
 
-    wire checkerboard_selected = (pattern_select == PATTERN_CHECKERBOARD);
-    wire radient_selected = (pattern_select == PATTERN_RADIENT);
-    wire spiral_selected = (pattern_select == PATTERN_SPIRAL);
     wire [9:0] frames_for_current_pattern = (pattern_select == PATTERN_CHECKERBOARD) ? FRAMES_CHECKERBOARD :
                                              (pattern_select == PATTERN_RADIENT) ? FRAMES_RADIENT :
                                              FRAMES_SPIRAL;
@@ -45,7 +41,6 @@ module pattern_selector (
         if (rst) begin
             pattern_select <= PATTERN_CHECKERBOARD;
             frame_counter  <= 0;
-            switch_pending <= 0;
             vsync_q <= 1;
         end else begin
             vsync_q <= vsync;
@@ -53,18 +48,12 @@ module pattern_selector (
             if (vsync_rising) begin
                 if (frame_counter == frames_for_current_pattern - 1) begin
                     frame_counter <= 0;
-                    switch_pending <= 1;
+                    pattern_select <= (pattern_select == PATTERN_LAST)
+                                      ? PATTERN_CHECKERBOARD
+                                      : pattern_select + 1;
                 end else begin
                     frame_counter <= frame_counter + 1;
                 end
-            end
-
-            if (switch_pending && (x == 0) && (y == 0)) begin
-                pattern_select <= (pattern_select == PATTERN_LAST)
-                                  ? PATTERN_CHECKERBOARD
-                                  : pattern_select + 1;
-                switch_pending <= 0;
-                frame_counter <= 0;
             end
         end
     end
@@ -72,11 +61,11 @@ module pattern_selector (
     checkerboard_gen u_checkerboard_gen(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(checkerboard_selected),
+        .pattern_enable(pattern_select == PATTERN_CHECKERBOARD),
         .x(x[5:0]),
         .y_bit5(y[5]),
-        .active(checkerboard_selected ? active : 0),
-        .next_frame(checkerboard_selected ? animation_trigger : 0),
+        .active((pattern_select == PATTERN_CHECKERBOARD) ? active : 0),
+        .next_frame((pattern_select == PATTERN_CHECKERBOARD) ? animation_trigger : 0),
         .step_size(step_size),
         .rgb(checkboard_rgb)
     );
@@ -84,11 +73,11 @@ module pattern_selector (
     radient_gradient u_radient_gradient(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(radient_selected),
+        .pattern_enable(pattern_select == PATTERN_RADIENT),
         .x(x),
         .y(y),
-        .active(radient_selected ? active : 0),
-        .next_frame(radient_selected ? animation_trigger : 0),
+        .active((pattern_select == PATTERN_RADIENT) ? active : 0),
+        .next_frame((pattern_select == PATTERN_RADIENT) ? animation_trigger : 0),
         .step_size(step_size),
         .rgb(radient_rgb)
     );
@@ -96,11 +85,11 @@ module pattern_selector (
     spiral_gen u_spiral_gen(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(spiral_selected),
+        .pattern_enable(pattern_select == PATTERN_SPIRAL),
         .x(x),
         .y(y),
-        .active(spiral_selected ? active : 0),
-        .next_frame(spiral_selected ? animation_trigger : 0),
+        .active((pattern_select == PATTERN_SPIRAL) ? active : 0),
+        .next_frame((pattern_select == PATTERN_SPIRAL) ? animation_trigger : 0),
         .step_size(step_size),
         .rgb(spiral_rgb)
     );
