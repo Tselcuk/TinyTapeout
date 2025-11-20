@@ -94,9 +94,18 @@ module emblem_gen(
     endfunction
 
     wire is_lion_pixel;
-    reg [9:0] lion_col_offset;
-    reg [9:0] lion_row_offset;
+    reg [5:0] lion_col_offset;
+    reg [5:0] lion_row_offset;
     reg lion_box_hit;
+    
+    // Compute offsets with full width, then truncate (safe due to bounds checks)
+    // verilator lint_off UNUSEDSIGNAL
+    wire [9:0] lion_col_left = x - LEFT_LION_X;
+    wire [9:0] lion_col_right = x - RIGHT_LION_X;
+    wire [9:0] lion_col_center = x - CENTER_LION_X;
+    wire [9:0] lion_row_top = y - TOP_LION_Y;
+    wire [9:0] lion_row_bottom = y - BOTTOM_LION_Y;
+    // verilator lint_on UNUSEDSIGNAL
 
     always @(*) begin
         lion_box_hit = 1'b0;
@@ -108,21 +117,21 @@ module emblem_gen(
         if (y >= TOP_LION_Y && y < (TOP_LION_Y + LION_HEIGHT)) begin
             // Check for top-left lion
             if (x >= LEFT_LION_X && x < (LEFT_LION_X + LION_WIDTH)) begin
-                lion_col_offset = x - LEFT_LION_X;
-                lion_row_offset = y - TOP_LION_Y;
+                lion_col_offset = lion_col_left[5:0];
+                lion_row_offset = lion_row_top[5:0];
                 lion_box_hit = 1'b1;
             // Check for top-right lion
             end else if (x >= RIGHT_LION_X && x < (RIGHT_LION_X + LION_WIDTH)) begin
-                lion_col_offset = x - RIGHT_LION_X;
-                lion_row_offset = y - TOP_LION_Y;
+                lion_col_offset = lion_col_right[5:0];
+                lion_row_offset = lion_row_top[5:0];
                 lion_box_hit = 1'b1;
             end
         // Check if the pixel is within the Y-range of the bottom lion
         end else if (y >= BOTTOM_LION_Y && y < (BOTTOM_LION_Y + LION_HEIGHT)) begin
             // Check for bottom lion
             if (x >= CENTER_LION_X && x < (CENTER_LION_X + LION_WIDTH)) begin
-                lion_col_offset = x - CENTER_LION_X;
-                lion_row_offset = y - BOTTOM_LION_Y;
+                lion_col_offset = lion_col_center[5:0];
+                lion_row_offset = lion_row_bottom[5:0];
                 lion_box_hit = 1'b1;
             end
         end
@@ -244,9 +253,15 @@ module emblem_gen(
     wire is_chevron_pixel;
     reg [9:0] chevron_col_offset;
     reg [9:0] chevron_row_offset;
-    reg [9:0] chevron_scaled_col;
-    reg [9:0] chevron_scaled_row;
+    reg [6:0] chevron_scaled_col;
+    reg [6:0] chevron_scaled_row;
     reg chevron_box_hit;
+    
+    // Compute scaled values with full width, then truncate (safe due to bounds checks)
+    // verilator lint_off UNUSEDSIGNAL
+    wire [9:0] chevron_scaled_col_full = chevron_col_offset >> 1;
+    wire [9:0] chevron_scaled_row_full = chevron_row_offset >> 1;
+    // verilator lint_on UNUSEDSIGNAL
 
     always @(*) begin
         chevron_box_hit = 1'b0;
@@ -261,8 +276,8 @@ module emblem_gen(
             chevron_col_offset = x - CHEVRON_X;
             chevron_row_offset = y - CHEVRON_Y;
             // Scale down to original bitmap coordinates (divide by scale factor)
-            chevron_scaled_col = chevron_col_offset >> 1;  // Divide by 2
-            chevron_scaled_row = chevron_row_offset >> 1;  // Divide by 2
+            chevron_scaled_col = chevron_scaled_col_full[6:0];  // Divide by 2
+            chevron_scaled_row = chevron_scaled_row_full[6:0];  // Divide by 2
             chevron_box_hit = 1'b1;
         end
     end

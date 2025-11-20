@@ -191,8 +191,11 @@ module waterloo_text_gen(
 
     // Scale down coordinates by 2 to index into base 5x7 bitmap (saves transistors)
     wire [2:0] pixel_x = char_x_offset[3:1]; // Divide by 2 to get bitmap column (0-4)
-    wire [9:0] temp_y_scaled = (y - TEXT_Y0) >> 1;
-    wire [2:0] pixel_y = temp_y_scaled[2:0];  // Divide by 2 to get bitmap row (0-6)
+    // verilator lint_off UNUSEDSIGNAL
+    wire [9:0] temp_y_scaled_full = (y - TEXT_Y0) >> 1;
+    // verilator lint_on UNUSEDSIGNAL
+    wire [2:0] temp_y_scaled = temp_y_scaled_full[2:0];
+    wire [2:0] pixel_y = temp_y_scaled;  // Divide by 2 to get bitmap row (0-6)
 
     // Direct lookup without intermediate char representation
     wire [4:0] char_row_data = get_char_bitmap_direct(char_pos, pixel_y);

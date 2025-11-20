@@ -46,11 +46,12 @@ module spiral_gen (
 
     // Create spiral by subtracting radius from angle (reduced precision)
     wire [6:0] radius_scaled = {1'b0, radius[9:4]}; // Divide by 16
+    // verilator lint_off UNUSEDSIGNAL
     wire [6:0] spiral_phase = {1'b0, angle} - radius_scaled;
-
-    // Divide into 6 arms using upper bits
+    // verilator lint_on UNUSEDSIGNAL
+    // Only upper bits [6:3] are used; lower bits [2:0] are unused but needed for correct arithmetic
     wire [2:0] arm_index = spiral_phase[6:4];
-    wire in_arm = (spiral_phase[3] == 1'b0) && (arm_index < 6) && (radius > 20);
+    wire in_arm = (spiral_phase[3] == 1'b0) && (arm_index < 3'd6) && (radius > 20);
 
     // Color lookup table for 6 arms (more predictable than XOR logic)
     wire [5:0] arm_color =
