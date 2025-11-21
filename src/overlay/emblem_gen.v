@@ -99,48 +99,51 @@ module emblem_gen(
     reg [5:0] lion_col_offset;
     reg [5:0] lion_row_offset;
     reg lion_box_hit;
-    
-    // Compute offsets with full width, then truncate (safe due to bounds checks)
-    // verilator lint_off UNUSEDSIGNAL
-    wire [9:0] lion_col_left = x - LEFT_LION_X;
-    wire [9:0] lion_col_right = x - RIGHT_LION_X;
-    wire [9:0] lion_col_center = x - CENTER_LION_X;
-    wire [9:0] lion_row_top = y - TOP_LION_Y;
-    wire [9:0] lion_row_bottom = y - BOTTOM_LION_Y;
-    // verilator lint_on UNUSEDSIGNAL
 
     always @(*) begin
+        reg [9:0] temp_col;
+        reg [9:0] temp_row;
+        
         lion_box_hit = 1'b0;
         // Default assignments to prevent latches
         lion_col_offset = 0;
         lion_row_offset = 0;
+        temp_col = 0;
+        temp_row = 0;
 
         // Check if the pixel is within the Y-range of the top two lions
         if (y >= TOP_LION_Y && y < (TOP_LION_Y + LION_HEIGHT)) begin
             // Check for top-left lion
             if (x >= LEFT_LION_X && x < (LEFT_LION_X + LION_WIDTH)) begin
-                lion_col_offset = lion_col_left[5:0];
-                lion_row_offset = lion_row_top[5:0];
+                temp_col = x - LEFT_LION_X;
+                temp_row = y - TOP_LION_Y;
+                lion_col_offset = temp_col[5:0];
+                lion_row_offset = temp_row[5:0];
                 lion_box_hit = 1'b1;
             // Check for top-right lion
             end else if (x >= RIGHT_LION_X && x < (RIGHT_LION_X + LION_WIDTH)) begin
-                lion_col_offset = lion_col_right[5:0];
-                lion_row_offset = lion_row_top[5:0];
+                temp_col = x - RIGHT_LION_X;
+                temp_row = y - TOP_LION_Y;
+                lion_col_offset = temp_col[5:0];
+                lion_row_offset = temp_row[5:0];
                 lion_box_hit = 1'b1;
             end
         // Check if the pixel is within the Y-range of the bottom lion
         end else if (y >= BOTTOM_LION_Y && y < (BOTTOM_LION_Y + LION_HEIGHT)) begin
             // Check for bottom lion
             if (x >= CENTER_LION_X && x < (CENTER_LION_X + LION_WIDTH)) begin
-                lion_col_offset = lion_col_center[5:0];
-                lion_row_offset = lion_row_bottom[5:0];
+                temp_col = x - CENTER_LION_X;
+                temp_row = y - BOTTOM_LION_Y;
+                lion_col_offset = temp_col[5:0];
+                lion_row_offset = temp_row[5:0];
                 lion_box_hit = 1'b1;
             end
         end
     end
 
     // Look up the pixel from the bitmap ROM only if it was inside one of the lion boxes
-    wire [LION_WIDTH_PIX-1:0] lion_mask = lion_row(lion_row_offset[5:0]);
+    wire [LION_WIDTH_PIX-1:0] lion_mask;
+    assign lion_mask = lion_row(lion_row_offset[5:0]);
     assign is_lion_pixel = lion_box_hit ? lion_mask[lion_col_offset[5:0]] : 1'b0;
 
     // Rows are stored relative to CHEVRON_BITMAP_MIN_ROW to drop the zero padding above/below the chevron.
@@ -194,50 +197,42 @@ module emblem_gen(
     endfunction
 
     wire is_chevron_pixel;
-    reg [9:0] chevron_col_offset;
-    reg [9:0] chevron_row_offset;
     reg [6:0] chevron_scaled_col;
     reg [6:0] chevron_scaled_row;
     reg chevron_box_hit;
-    
-    // Compute scaled values with full width, then truncate (safe due to bounds checks)
-    // verilator lint_off UNUSEDSIGNAL
-    wire [9:0] chevron_scaled_col_full = chevron_col_offset >> 1;
-    wire [9:0] chevron_scaled_row_full = chevron_row_offset >> 1;
-    wire chevron_row_in_range = (chevron_scaled_row >= CHEVRON_BITMAP_MIN_ROW) && (chevron_scaled_row <= CHEVRON_BITMAP_MAX_ROW);
-    wire [6:0] chevron_row_idx = chevron_scaled_row - CHEVRON_BITMAP_MIN_ROW;
-    // verilator lint_on UNUSEDSIGNAL
+    wire chevron_row_in_range;
 
     always @(*) begin
+        reg [9:0] temp_scaled_col;
+        reg [9:0] temp_scaled_row;
+        
         chevron_box_hit = 1'b0;
-        chevron_col_offset = 0;
-        chevron_row_offset = 0;
         chevron_scaled_col = 0;
         chevron_scaled_row = 0;
+        temp_scaled_col = 0;
+        temp_scaled_row = 0;
 
         // Check if the pixel is within the chevron bounds (scaled)
         if (y >= CHEVRON_Y && y < (CHEVRON_Y + CHEVRON_HEIGHT) &&
             x >= CHEVRON_X && x < (CHEVRON_X + CHEVRON_WIDTH)) begin
-            chevron_col_offset = x - CHEVRON_X;
-            chevron_row_offset = y - CHEVRON_Y;
             // Scale down to original bitmap coordinates (divide by scale factor)
-            chevron_scaled_col = chevron_scaled_col_full[6:0];  // Divide by 2
-            chevron_scaled_row = chevron_scaled_row_full[6:0];  // Divide by 2
+            temp_scaled_col = (x - CHEVRON_X) >> 1;
+            temp_scaled_row = (y - CHEVRON_Y) >> 1;
+            chevron_scaled_col = temp_scaled_col[6:0];
+            chevron_scaled_row = temp_scaled_row[6:0];
             chevron_box_hit = 1'b1;
         end
     end
 
-    // Look up the pixel from the chevron bitmap ROM
-    // Chevron is 85 pixels wide, stored in 96 bits with padding on the right
-    // Bit 95 is leftmost pixel (x=0), bit 11 is rightmost pixel (x=84)
-    // When scaling 2x, chevron_scaled_col ranges from 0-84, chevron_scaled_row ranges from 0-99
-    wire [95:0] chevron_mask = chevron_row_in_range ? chevron_row(chevron_row_idx[5:0]) : 96'h0;
-    wire [6:0] chevron_bit_idx = 7'd95 - chevron_scaled_col[6:0];
-    wire chevron_pixel_value = (chevron_box_hit && chevron_row_in_range) ?
-                               chevron_mask[chevron_bit_idx] : 1'b0;
-
-    // Draw the chevron pixels (no border)
-    assign is_chevron_pixel = chevron_pixel_value;
+    wire [6:0] chevron_row_idx;
+    wire [6:0] chevron_bit_idx;
+    wire [95:0] chevron_mask;
+    
+    assign chevron_row_in_range = (chevron_scaled_row >= CHEVRON_BITMAP_MIN_ROW) && (chevron_scaled_row <= CHEVRON_BITMAP_MAX_ROW);
+    assign chevron_row_idx = chevron_scaled_row - CHEVRON_BITMAP_MIN_ROW;
+    assign chevron_bit_idx = 7'd95 - chevron_scaled_col[6:0];
+    assign chevron_mask = chevron_row_in_range ? chevron_row(chevron_row_idx[5:0]) : 96'h0;
+    assign is_chevron_pixel = (chevron_box_hit && chevron_row_in_range) ? chevron_mask[chevron_bit_idx] : 1'b0;
 
     function automatic [6:0] shield_width;
         input [7:0] y_addr;
@@ -296,21 +291,22 @@ module emblem_gen(
         end
     endfunction
 
-    wire [9:0] abs_dx = (x >= EMBLEM_CENTER_X) ? (x - EMBLEM_CENTER_X) : (EMBLEM_CENTER_X - x);
-    wire [9:0] rel_y = y - EMBLEM_Y0;
-
     reg draw_flag;
 
     always @(*) begin
         reg [6:0] half_width;
         reg [6:0] inner_half;
         reg shield_border;
+        reg [9:0] abs_dx;
+        reg [9:0] rel_y;
 
         half_width = 0;
         inner_half = 0;
         shield_border = 0;
         draw_flag = 0;
         rgb = 6'b000000;
+        abs_dx = (x >= EMBLEM_CENTER_X) ? (x - EMBLEM_CENTER_X) : (EMBLEM_CENTER_X - x);
+        rel_y = y - EMBLEM_Y0;
 
         if (active && (y >= EMBLEM_Y0) && (y < EMBLEM_Y1)) begin
             half_width = shield_width(rel_y[7:0]);

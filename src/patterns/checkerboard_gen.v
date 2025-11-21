@@ -5,8 +5,8 @@ module checkerboard_gen (
     input wire pattern_enable,
     input wire [5:0] x,
     input wire y_bit5,
-    input wire [0:0] active,
-    input wire [0:0] next_frame,
+    input wire active,
+    input wire next_frame,
     input wire [2:0] step_size,
     output reg [5:0] rgb
 );
