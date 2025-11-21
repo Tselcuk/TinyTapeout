@@ -101,8 +101,10 @@ module emblem_gen(
     reg lion_box_hit;
 
     always @(*) begin
+        /* verilator lint_off UNUSEDSIGNAL */
         reg [9:0] temp_col;
         reg [9:0] temp_row;
+        /* verilator lint_on UNUSEDSIGNAL */
         
         lion_box_hit = 1'b0;
         // Default assignments to prevent latches
@@ -203,8 +205,10 @@ module emblem_gen(
     wire chevron_row_in_range;
 
     always @(*) begin
+        /* verilator lint_off UNUSEDSIGNAL */
         reg [9:0] temp_scaled_col;
         reg [9:0] temp_scaled_row;
+        /* verilator lint_on UNUSEDSIGNAL */
         
         chevron_box_hit = 1'b0;
         chevron_scaled_col = 0;
@@ -224,7 +228,9 @@ module emblem_gen(
         end
     end
 
+    /* verilator lint_off UNUSEDSIGNAL */
     wire [6:0] chevron_row_idx;
+    /* verilator lint_on UNUSEDSIGNAL */
     wire [6:0] chevron_bit_idx;
     wire [95:0] chevron_mask;
     
@@ -233,6 +239,61 @@ module emblem_gen(
     assign chevron_bit_idx = 7'd95 - chevron_scaled_col[6:0];
     assign chevron_mask = chevron_row_in_range ? chevron_row(chevron_row_idx[5:0]) : 96'h0;
     assign is_chevron_pixel = (chevron_box_hit && chevron_row_in_range) ? chevron_mask[chevron_bit_idx] : 1'b0;
+
+    // Helper function to check if a given coordinate is a chevron pixel
+    // This simplifies neighbor checking by reusing the lookup logic
+    function automatic is_chevron_at_coord;
+        input [9:0] check_x;
+        input [9:0] check_y;
+        /* verilator lint_off UNUSEDSIGNAL */
+        reg [9:0] temp_x, temp_y;
+        /* verilator lint_on UNUSEDSIGNAL */
+        reg [6:0] scaled_col, scaled_row;
+        reg in_box, in_range;
+        /* verilator lint_off UNUSEDSIGNAL */
+        reg [6:0] row_idx, bit_idx;
+        /* verilator lint_on UNUSEDSIGNAL */
+        reg [95:0] mask;
+        begin
+            // Bounding box check
+            in_box = (check_y >= CHEVRON_Y && check_y < (CHEVRON_Y + CHEVRON_HEIGHT) &&
+                      check_x >= CHEVRON_X && check_x < (CHEVRON_X + CHEVRON_WIDTH));
+            
+            if (in_box) begin
+                // Scale coordinates
+                temp_x = (check_x - CHEVRON_X) >> 1;
+                temp_y = (check_y - CHEVRON_Y) >> 1;
+                scaled_col = temp_x[6:0];
+                scaled_row = temp_y[6:0];
+                
+                // Range check
+                in_range = (scaled_row >= CHEVRON_BITMAP_MIN_ROW) && (scaled_row <= CHEVRON_BITMAP_MAX_ROW);
+                
+                if (in_range) begin
+                    row_idx = scaled_row - CHEVRON_BITMAP_MIN_ROW;
+                    bit_idx = 7'd95 - scaled_col;
+                    mask = chevron_row(row_idx[5:0]);
+                    is_chevron_at_coord = mask[bit_idx];
+                end else begin
+                    is_chevron_at_coord = 1'b0;
+                end
+            end else begin
+                is_chevron_at_coord = 1'b0;
+            end
+        end
+    endfunction
+
+    // Check 4 neighbors (cardinal directions only - simpler than 8)
+    wire is_chevron_outline;
+    wire neighbor_left, neighbor_right, neighbor_up, neighbor_down;
+    
+    assign neighbor_left = is_chevron_at_coord(x - 10'd1, y);
+    assign neighbor_right = is_chevron_at_coord(x + 10'd1, y);
+    assign neighbor_up = is_chevron_at_coord(x, y - 10'd1);
+    assign neighbor_down = is_chevron_at_coord(x, y + 10'd1);
+    
+    // Outline pixel: not a chevron pixel, but has at least one chevron neighbor
+    assign is_chevron_outline = !is_chevron_pixel && (neighbor_left || neighbor_right || neighbor_up || neighbor_down);
 
     function automatic [6:0] shield_width;
         input [7:0] y_addr;
@@ -319,6 +380,7 @@ module emblem_gen(
 
                 if (is_chevron_pixel) rgb = COLOR_WHITE;
                 if (is_lion_pixel) rgb = COLOR_RED;
+                if (is_chevron_outline) rgb = COLOR_BLACK;
                 if (shield_border) rgb = COLOR_BLACK;
             end
         end
