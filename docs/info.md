@@ -28,7 +28,7 @@ The design uses 2-bit color depth per channel (6-bit RGB total), providing 64 di
 
 ## How to test
 
-Run `visualize/viz.py` to visualize the output. Adjust `visualize/harness.cpp` to change the number of frames if needed. For hardware testing, connect to a VGA display (hsync, vsync, and RGB signals). Use `ui_in[0]` to pause, `ui_in[1]` to resume, and `ui_in[2-7]` for speed control (higher = faster).
+Run `visualize/viz.py` to visualize the output. Adjust `visualize/harness.cpp` to change the number of frames (FRAMES) or select animation speed mode (MODE: 1-6). For hardware testing, connect to a VGA display (hsync, vsync, and RGB signals). Use `ui_in[0]` to pause, `ui_in[1]` to resume, and `ui_in[2-7]` for speed control (higher = faster).
 
 ## External hardware
 
