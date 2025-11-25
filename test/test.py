@@ -51,6 +51,30 @@ async def wait_for_pause_state(dut, expected_state, max_cycles=2048):
     raise AssertionError(f"Speed controller did not reach paused state {expected_state} within {max_cycles} cycles")
 
 
+def read_output_rgb(dut):
+    """Return the packed RGB bits from the output bus."""
+    return (
+        (int(dut.uo_out[7].value) << 5)
+        | (int(dut.uo_out[6].value) << 4)
+        | (int(dut.uo_out[5].value) << 3)
+        | (int(dut.uo_out[3].value) << 2)
+        | (int(dut.uo_out[2].value) << 1)
+        | int(dut.uo_out[1].value)
+    )
+
+
+async def wait_for_position(dut, target_x, target_y, max_cycles=H_TOTAL * V_DISPLAY * 2):
+    """Advance the simulation until the VGA timing block reaches a coordinate."""
+    for _ in range(max_cycles):
+        if (
+            int(dut.user_project.u_vga_timing.x.value) == target_x
+            and int(dut.user_project.u_vga_timing.y.value) == target_y
+        ):
+            return
+        await RisingEdge(dut.clk)
+    raise AssertionError(f"Timed out waiting for coordinate ({target_x}, {target_y})")
+
+
 @cocotb.test()
 async def test_vga_timing_generates_expected_syncs(dut):
     """Test VGA timing signals. Requires RTL simulation (internal signals not available in gate-level)."""
@@ -145,3 +169,74 @@ async def test_pause_resume_freezes_animation(dut):
         if resumed_offset != paused_offset:
             break
     assert resumed_offset != paused_offset, "Animation offset should change after resuming"
+
+
+@cocotb.test()
+async def test_speed_controller_priority_and_pause(dut):
+    """Validate speed selection priority, defaulting, and pause/resume toggling."""
+    if not is_rtl_simulation(dut):
+        cocotb.log.info("Skipping test - requires RTL simulation (internal signals not available in gate-level netlist)")
+        return
+
+    await initialize_dut(dut)
+
+    # Highest asserted speed bit wins, defaults to 1 when none set or invalid.
+    vectors = [
+        (0b0000_0000, 1),
+        (0b0000_1000, 2),
+        (0b0001_0000, 3),
+        (0b0010_0000, 4),
+        (0b0100_0000, 5),
+        (0b1000_0000, 6),
+        (0b0101_1000, 5),  # Multiple bits asserted -> highest priority bit 6 wins
+        (0b1101_1000, 6),  # Bit 7 overrides everything else
+    ]
+
+    for ui_value, expected_step in vectors:
+        dut.ui_in.value = ui_value
+        await RisingEdge(dut.clk)
+        observed = int(dut.user_project.u_speed_controller.step_size.value)
+        assert observed == expected_step, f"ui_in={ui_value:08b} produced step_size={observed}, expected {expected_step}"
+
+    # Pause/resume latches the paused state.
+    dut.ui_in.value = 0b0000_0001
+    await RisingEdge(dut.clk)
+    assert int(dut.user_project.u_speed_controller.paused.value) == 1, "Pause input should latch paused=1"
+
+    dut.ui_in.value = 0b0000_0010
+    await RisingEdge(dut.clk)
+    assert int(dut.user_project.u_speed_controller.paused.value) == 0, "Resume input should clear paused"
+
+
+@cocotb.test()
+async def test_color_routing_and_overlays(dut):
+    """Ensure pattern output reaches the pins and overlays take priority."""
+    if not is_rtl_simulation(dut):
+        cocotb.log.info("Skipping test - requires RTL simulation (internal signals not available in gate-level netlist)")
+        return
+
+    await initialize_dut(dut)
+
+    # Base checkerboard tiles (pattern 0) - dark tile then bright tile.
+    await wait_for_position(dut, 10, 10)
+    assert read_output_rgb(dut) == 0b000000, "Checkerboard dark tile should output black"
+
+    await wait_for_position(dut, 10, 40)
+    assert read_output_rgb(dut) == 0b100100, "Checkerboard light tile should output green/red mix"
+
+    # Emblem overlay should override the pattern with gold even where the pattern is bright.
+    await wait_for_position(dut, 320, 200)
+    assert read_output_rgb(dut) == 0b110110, "Emblem region should output gold instead of the underlying pattern"
+
+    # Waterloo text overlay draws below the emblem and also maps through the pins.
+    await wait_for_position(dut, 249, 325)
+    assert read_output_rgb(dut) == 0b110110, "Text overlay pixels should be gold and reach the output bus"
+
+
+@cocotb.test()
+async def test_unused_io_lines(dut):
+    """Verify the bidirectional IOs stay tristated as designed."""
+    await initialize_dut(dut)
+    await RisingEdge(dut.clk)
+    assert int(dut.uio_out.value) == 0, "uio_out should remain tied low"
+    assert int(dut.uio_oe.value) == 0, "uio_oe should keep all bidirectional pins as inputs"
