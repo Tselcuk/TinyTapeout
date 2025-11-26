@@ -1,35 +1,20 @@
+<!---
+
+This file is used to generate your project datasheet. Please fill in the information below and delete any unused
+sections.
+
+You can also include images in this folder and reference them in the markdown. Each image must be less than
+512 kb in size, and the combined size of all images must be less than 1 MB.
+-->
+
 ## How it works
 
-WATpixels generates a VGA display output at 640×480 resolution with 60Hz refresh rate. The design features three animated patterns that automatically cycle:
-- **Checkerboard** (4 seconds): Animated checkerboard pattern
-- **Gradient** (8 seconds): Radial gradient pattern
-- **Spiral** (6 seconds): Animated spiral pattern
-
-Two overlays are rendered on top of the patterns:
-- Waterloo Engineering emblem
-- "Waterloo" text overlay
-
-The design uses 2-bit color depth per channel (6-bit RGB total), providing 64 different colors.
-
-### Input Controls
-- `ui_in[0]`: Pause animation
-- `ui_in[1]`: Resume animation
-- `ui_in[2-7]`: Speed control (6 speed settings via priority encoder - higher pins = faster)
-
-### Output Signals
-- `uo_out[0]`: hsync
-- `uo_out[1]`: B0 (Blue bit 0)
-- `uo_out[2]`: G0 (Green bit 0)
-- `uo_out[3]`: R0 (Red bit 0)
-- `uo_out[4]`: vsync
-- `uo_out[5]`: B1 (Blue bit 1)
-- `uo_out[6]`: G1 (Green bit 1)
-- `uo_out[7]`: R1 (Red bit 1)
+Explain how your project works
 
 ## How to test
 
-Run `visualize/viz.py` to visualize the output. Adjust `visualize/harness.cpp` to change the number of frames (FRAMES) or select animation speed mode (MODE: 1-6). For hardware testing, connect to a VGA display (hsync, vsync, and RGB signals). Use `ui_in[0]` to pause, `ui_in[1]` to resume, and `ui_in[2-7]` for speed control (higher = faster).
+Explain how to use your project
 
 ## External hardware
 
-VGA display (640×480, 60Hz compatible)
+List external hardware used in your project (e.g. PMOD, LED display, etc), if any
