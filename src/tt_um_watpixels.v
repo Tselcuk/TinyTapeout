@@ -122,6 +122,6 @@ module tt_um_watpixels (
 
   // Bidirectional IOs
   assign uio_out = 0; // Not used
-  assign uio_oe = 0; // All bidirectional pins are inputs
+  assign uio_oe = 0; // Not used
 
 endmodule

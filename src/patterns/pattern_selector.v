@@ -13,9 +13,9 @@ module pattern_selector (
     localparam [1:0] PATTERN_CHECKERBOARD = 0;
     localparam [1:0] PATTERN_RADIENT = 1;
     localparam [1:0] PATTERN_SPIRAL = 2;
-    localparam [9:0] FRAMES_CHECKERBOARD = 240;
-    localparam [9:0] FRAMES_RADIENT = 480;
-    localparam [9:0] FRAMES_SPIRAL = 360;
+    localparam [9:0] FRAMES_CHECKERBOARD = 240; // 4 seconds
+    localparam [9:0] FRAMES_RADIENT = 480; // 8 seconds
+    localparam [9:0] FRAMES_SPIRAL = 360; // 6 seconds
     localparam [1:0] PATTERN_LAST = PATTERN_SPIRAL;
 
     reg [1:0] pattern_select;

@@ -9,22 +9,18 @@ module vga_timing (
 );
 
     // Horizontal timing parameters (in pixel clocks)
+    // H_FRONT = 16, H_SYNC = 96, H_BACK = 48
     localparam H_DISPLAY = 640;
-    localparam H_FRONT   = 16;
-    localparam H_SYNC    = 96;
-    localparam H_BACK    = 48;
-    localparam H_TOTAL   = H_DISPLAY + H_FRONT + H_SYNC + H_BACK; // 800 pixels
-    localparam H_SYNC_START = H_DISPLAY + H_FRONT;  // 656
-    localparam H_SYNC_END = H_SYNC_START + H_SYNC;  // 752
+    localparam H_TOTAL = 800;  // H_DISPLAY + H_FRONT + H_SYNC + H_BACK
+    localparam H_SYNC_START = 656;  // H_DISPLAY + H_FRONT
+    localparam H_SYNC_END = 752;  // H_SYNC_START + H_SYNC
 
     // Vertical timing parameters (in scan lines)
+    // V_FRONT = 10, V_SYNC = 2, V_BACK = 33
     localparam V_DISPLAY = 480;
-    localparam V_FRONT   = 10;
-    localparam V_SYNC    = 2;
-    localparam V_BACK    = 33;
-    localparam V_TOTAL   = V_DISPLAY + V_FRONT + V_SYNC + V_BACK; // 525 lines
-    localparam V_SYNC_START = V_DISPLAY + V_FRONT;  // 490
-    localparam V_SYNC_END = V_SYNC_START + V_SYNC;  // 492
+    localparam V_TOTAL = 525;  // V_DISPLAY + V_FRONT + V_SYNC + V_BACK
+    localparam V_SYNC_START = 490;  // V_DISPLAY + V_FRONT
+    localparam V_SYNC_END = 492;  // V_SYNC_START + V_SYNC
 
     // Pixel co-ordinate counters
     always @(posedge clk or posedge rst) begin

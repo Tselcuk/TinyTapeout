@@ -186,7 +186,7 @@ module waterloo_text_gen(
         rgb = 6'b110110;
 
         if (in_text_bounds && pixel_on) begin
-            draw = 1'b1;
+            draw = 1;
         end
     end
 

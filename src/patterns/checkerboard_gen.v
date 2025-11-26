@@ -10,7 +10,6 @@ module checkerboard_gen (
     input wire [2:0] step_size,
     output reg [5:0] rgb
 );
-
     reg [7:0] frame_offset;
     reg [1:0] subpixel_accum;
 
