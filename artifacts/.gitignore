@@ -1,0 +1,7 @@
+# Ignore everything in artifacts directory
+*
+
+# Except the download script
+!download_artifacts.sh
+!.gitignore
+
