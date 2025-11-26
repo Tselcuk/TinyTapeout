@@ -217,7 +217,18 @@ async def test_color_routing_and_overlays(dut):
 
     await initialize_dut(dut)
 
+    # Pause the animation to ensure consistent pattern state regardless of test execution order
+    # This prevents flaky failures when random seed changes test execution order
+    dut.ui_in.value = 0b0000_0001  # Assert pause
+    await RisingEdge(dut.clk)
+    await wait_for_pause_state(dut, 1)
+
+    # Wait for a complete frame to ensure we're at a stable state
+    await RisingEdge(dut.user_project.u_vga_timing.vsync)
+    await RisingEdge(dut.user_project.u_vga_timing.vsync)
+
     # Base checkerboard tiles (pattern 0) - dark tile then bright tile.
+    # With frame_offset=0 (after reset and pause), the pattern should be stable
     await wait_for_position(dut, 10, 10)
     assert read_output_rgb(dut) == 0b000000, "Checkerboard dark tile should output black"
 
