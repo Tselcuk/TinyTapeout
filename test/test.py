@@ -199,11 +199,17 @@ async def test_speed_controller_priority_and_pause(dut):
         assert observed == expected_step, f"ui_in={ui_value:08b} produced step_size={observed}, expected {expected_step}"
 
     # Pause/resume latches the paused state.
+    # Set pause input and wait for clock edge to latch it
     dut.ui_in.value = 0b0000_0001
+    await RisingEdge(dut.clk)
+    # Wait one more cycle to ensure the value has been latched and is stable
     await RisingEdge(dut.clk)
     assert int(dut.user_project.u_speed_controller.paused.value) == 1, "Pause input should latch paused=1"
 
+    # Set resume input and wait for clock edge to latch it
     dut.ui_in.value = 0b0000_0010
+    await RisingEdge(dut.clk)
+    # Wait one more cycle to ensure the value has been latched and is stable
     await RisingEdge(dut.clk)
     assert int(dut.user_project.u_speed_controller.paused.value) == 0, "Resume input should clear paused"
 
