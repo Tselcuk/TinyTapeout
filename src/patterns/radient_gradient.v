@@ -14,14 +14,13 @@ module radient_gradient (
     reg [1:0] subframe_accum;
 
     wire [2:0] frac_sum = {1'b0, subframe_accum} + {1'b0, step_size[1:0]};
-    wire [9:0] counter_sum = frame_counter + {9'b0, step_size[2]} + {9'b0, frac_sum[2]};
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             frame_counter <= 0;
             subframe_accum <= 0;
         end else if (pattern_enable && next_frame) begin
-            frame_counter <= counter_sum;
+            frame_counter <= frame_counter + {9'b0, step_size[2]} + {9'b0, frac_sum[2]};
             subframe_accum <= frac_sum[1:0];
         end
     end
@@ -32,9 +31,10 @@ module radient_gradient (
     wire signed [10:0] sx = $signed({1'b0, x}) - $signed({1'b0, CENTER_X});
     wire signed [10:0] sy = $signed({1'b0, y}) - $signed({1'b0, CENTER_Y});
 
-    wire [10:0] abs_sx = sx[10] ? -sx : sx;
-    wire [10:0] abs_sy = sy[10] ? -sy : sy;
-    wire [11:0] manhattan_distance = abs_sx + abs_sy;
+    // Optimized absolute value using 10 bits (max values: 320, 240 fit in 9 bits)
+    wire [9:0] abs_sx = sx[10] ? (~sx[9:0] + 1) : sx[9:0];
+    wire [9:0] abs_sy = sy[10] ? (~sy[9:0] + 1) : sy[9:0];
+    wire [11:0] manhattan_distance = {2'b0, abs_sx} + {2'b0, abs_sy};
 
     wire [7:0] base_radius = 30 + frame_counter[7:1]; // This is what expands the pattern outwards
 

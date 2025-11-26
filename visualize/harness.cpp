@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-
 #include <verilated.h>
 #include <Vtt_um_watpixels.h>
 
@@ -12,7 +11,7 @@ struct Config {
     static constexpr int V_VISIBLE = 480;
     static constexpr int H_TOTAL = 800;
     static constexpr int V_TOTAL = 525;
-    static constexpr int FRAMES = 10;
+    static constexpr int FRAMES = 1000;
     static constexpr int MODE = 2;
 };
 

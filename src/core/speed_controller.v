@@ -11,16 +11,9 @@ module speed_controller (
     output reg [2:0] step_size
 );
     // Map selectable speeds onto fixed-point step sizes (Q1.2: 1 integer bit, 2 fractional bits).
+    // For valid speeds 1-6, step_size equals speed. For invalid speeds (0, 7), default to 1.
     always @(*) begin
-        case (speed[2:0])
-            3'd1: step_size = 1; // 0.25 pixels/frame (1/4)
-            3'd2: step_size = 2; // 0.5 pixels/frame (2/4)
-            3'd3: step_size = 3; // 0.75 pixels/frame (3/4)
-            3'd4: step_size = 4; // 1.0 pixels/frame (4/4)
-            3'd5: step_size = 5; // 1.25 pixels/frame (5/4)
-            3'd6: step_size = 6; // 1.5 pixels/frame (6/4)
-            default: step_size = 1;
-        endcase
+        step_size = ((speed >= 3'd1) && (speed <= 3'd6)) ? speed : 3'd1;
     end
 
     always @(posedge clk or posedge rst) begin
