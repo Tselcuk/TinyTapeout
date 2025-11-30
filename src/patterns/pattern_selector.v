@@ -22,6 +22,10 @@ module pattern_selector (
 
     localparam [9:0] FRAMES_PER_PATTERN = 300;
 
+    wire checkerboard_next = (pattern_select == PATTERN_CHECKERBOARD) ? animation_trigger : 0;
+    wire radient_next = (pattern_select == PATTERN_RADIENT) ? animation_trigger : 0;
+    wire spiral_next = (pattern_select == PATTERN_SPIRAL) ? animation_trigger : 0;
+
     // Track VGA frame advances and defer pattern switches to the next frame origin.
     // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse).
     // vsync is active low, so we detect when it transitions from low to high.
@@ -68,7 +72,7 @@ module pattern_selector (
         .rst(pattern_rst),
         .x(x[5:0]),
         .y_bit5(y[5]),
-        .next_frame((pattern_select == PATTERN_CHECKERBOARD) ? animation_trigger : 0),
+        .next_frame(checkerboard_next),
         .step_size(step_size),
         .rgb(checkboard_rgb)
     );
@@ -78,7 +82,7 @@ module pattern_selector (
         .rst(pattern_rst),
         .x(x),
         .y(y),
-        .next_frame((pattern_select == PATTERN_RADIENT) ? animation_trigger : 0),
+        .next_frame(radient_next),
         .step_size(step_size),
         .rgb(radient_rgb)
     );
@@ -88,7 +92,7 @@ module pattern_selector (
         .rst(pattern_rst),
         .x(x),
         .y(y),
-        .next_frame((pattern_select == PATTERN_SPIRAL) ? animation_trigger : 0),
+        .next_frame(spiral_next),
         .step_size(step_size),
         .rgb(spiral_rgb)
     );
