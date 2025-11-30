@@ -15,179 +15,123 @@ module waterloo_text_gen(
     localparam [9:0] TEXT_X0 = TEXT_CENTER_X - (TOTAL_TEXT_WIDTH >> 1);
 
     // Direct position-to-bitmap lookup
-    function automatic [4:0] get_char_bitmap_direct;
+    // This compresses the transistors required by taking advantage of default values
+    function automatic [4:0] get_char_bmp;
         input [3:0] pos;
         input [2:0] row;
         begin
             case (pos)
-                4'd0: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b10001;
-                    3'd1: get_char_bitmap_direct = 5'b10001;
-                    3'd2: get_char_bitmap_direct = 5'b10001;
-                    3'd3: get_char_bitmap_direct = 5'b10101;
-                    3'd4: get_char_bitmap_direct = 5'b10101;
-                    3'd5: get_char_bitmap_direct = 5'b11011;
-                    3'd6: get_char_bitmap_direct = 5'b10001;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd0: case (row) // W
+                    3'd3: get_char_bmp = 5'b10101;
+                    3'd4: get_char_bmp = 5'b10101;
+                    3'd5: get_char_bmp = 5'b11011;
+                    default: get_char_bmp = 5'b10001;
                 endcase
-                4'd1: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b01110;
-                    3'd1: get_char_bitmap_direct = 5'b10001;
-                    3'd2: get_char_bitmap_direct = 5'b10001;
-                    3'd3: get_char_bitmap_direct = 5'b11111;
-                    3'd4: get_char_bitmap_direct = 5'b10001;
-                    3'd5: get_char_bitmap_direct = 5'b10001;
-                    3'd6: get_char_bitmap_direct = 5'b10001;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd1: case (row) // A
+                    3'd0: get_char_bmp = 5'b01110;
+                    3'd3: get_char_bmp = 5'b11111;
+                    default: get_char_bmp = 5'b10001;
                 endcase
-                4'd2: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b11111;
-                    3'd1: get_char_bitmap_direct = 5'b00100;
-                    3'd2: get_char_bitmap_direct = 5'b00100;
-                    3'd3: get_char_bitmap_direct = 5'b00100;
-                    3'd4: get_char_bitmap_direct = 5'b00100;
-                    3'd5: get_char_bitmap_direct = 5'b00100;
-                    3'd6: get_char_bitmap_direct = 5'b00100;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd2: case (row) // T
+                    3'd0: get_char_bmp = 5'b11111;
+                    default: get_char_bmp = 5'b00100;
                 endcase
-                4'd3: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b11111;
-                    3'd1: get_char_bitmap_direct = 5'b10000;
-                    3'd2: get_char_bitmap_direct = 5'b10000;
-                    3'd3: get_char_bitmap_direct = 5'b11110;
-                    3'd4: get_char_bitmap_direct = 5'b10000;
-                    3'd5: get_char_bitmap_direct = 5'b10000;
-                    3'd6: get_char_bitmap_direct = 5'b11111;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd3, 4'd9: case (row) // E
+                    3'd0: get_char_bmp = 5'b11111;
+                    3'd3: get_char_bmp = 5'b11110;
+                    3'd6: get_char_bmp = 5'b11111;
+                    default: get_char_bmp = 5'b10000;
                 endcase
-                4'd4: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b11110;
-                    3'd1: get_char_bitmap_direct = 5'b10001;
-                    3'd2: get_char_bitmap_direct = 5'b10001;
-                    3'd3: get_char_bitmap_direct = 5'b11110;
-                    3'd4: get_char_bitmap_direct = 5'b10100;
-                    3'd5: get_char_bitmap_direct = 5'b10010;
-                    3'd6: get_char_bitmap_direct = 5'b10001;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd4: case (row) // R
+                    3'd0: get_char_bmp = 5'b11110;
+                    3'd3: get_char_bmp = 5'b11110;
+                    3'd4: get_char_bmp = 5'b10100;
+                    3'd5: get_char_bmp = 5'b10010;
+                    default: get_char_bmp = 5'b10001;
                 endcase
-                4'd5: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b10000;
-                    3'd1: get_char_bitmap_direct = 5'b10000;
-                    3'd2: get_char_bitmap_direct = 5'b10000;
-                    3'd3: get_char_bitmap_direct = 5'b10000;
-                    3'd4: get_char_bitmap_direct = 5'b10000;
-                    3'd5: get_char_bitmap_direct = 5'b10000;
-                    3'd6: get_char_bitmap_direct = 5'b11111;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd5: case (row) // L
+                    3'd6: get_char_bmp = 5'b11111;
+                    default: get_char_bmp = 5'b10000;
                 endcase
-                4'd6: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b01110;
-                    3'd1: get_char_bitmap_direct = 5'b10001;
-                    3'd2: get_char_bitmap_direct = 5'b10001;
-                    3'd3: get_char_bitmap_direct = 5'b10001;
-                    3'd4: get_char_bitmap_direct = 5'b10001;
-                    3'd5: get_char_bitmap_direct = 5'b10001;
-                    3'd6: get_char_bitmap_direct = 5'b01110;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd6, 4'd7: case (row) // O
+                    3'd0: get_char_bmp = 5'b01110;
+                    3'd6: get_char_bmp = 5'b01110;
+                    default: get_char_bmp = 5'b10001;
                 endcase
-                4'd7: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b01110;
-                    3'd1: get_char_bitmap_direct = 5'b10001;
-                    3'd2: get_char_bitmap_direct = 5'b10001;
-                    3'd3: get_char_bitmap_direct = 5'b10001;
-                    3'd4: get_char_bitmap_direct = 5'b10001;
-                    3'd5: get_char_bitmap_direct = 5'b10001;
-                    3'd6: get_char_bitmap_direct = 5'b01110;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd10: case (row) // N
+                    3'd1: get_char_bmp = 5'b11001;
+                    3'd2: get_char_bmp = 5'b10101;
+                    3'd3: get_char_bmp = 5'b10101;
+                    3'd4: get_char_bmp = 5'b10011;
+                    default: get_char_bmp = 5'b10001;
                 endcase
-                4'd8: get_char_bitmap_direct = 5'b00000;
-                4'd9: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b11111;
-                    3'd1: get_char_bitmap_direct = 5'b10000;
-                    3'd2: get_char_bitmap_direct = 5'b10000;
-                    3'd3: get_char_bitmap_direct = 5'b11110;
-                    3'd4: get_char_bitmap_direct = 5'b10000;
-                    3'd5: get_char_bitmap_direct = 5'b10000;
-                    3'd6: get_char_bitmap_direct = 5'b11111;
-                    default: get_char_bitmap_direct = 5'b00000;
+                4'd11: case (row) // G
+                    3'd0: get_char_bmp = 5'b01110;
+                    3'd2: get_char_bmp = 5'b10000;
+                    3'd3: get_char_bmp = 5'b10111;
+                    3'd6: get_char_bmp = 5'b01110;
+                    default: get_char_bmp = 5'b10001;
                 endcase
-                4'd10: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b10001;
-                    3'd1: get_char_bitmap_direct = 5'b11001;
-                    3'd2: get_char_bitmap_direct = 5'b10101;
-                    3'd3: get_char_bitmap_direct = 5'b10101;
-                    3'd4: get_char_bitmap_direct = 5'b10011;
-                    3'd5: get_char_bitmap_direct = 5'b10001;
-                    3'd6: get_char_bitmap_direct = 5'b10001;
-                    default: get_char_bitmap_direct = 5'b00000;
-                endcase
-                4'd11: case (row)
-                    3'd0: get_char_bitmap_direct = 5'b01110;
-                    3'd1: get_char_bitmap_direct = 5'b10001;
-                    3'd2: get_char_bitmap_direct = 5'b10000;
-                    3'd3: get_char_bitmap_direct = 5'b10111;
-                    3'd4: get_char_bitmap_direct = 5'b10001;
-                    3'd5: get_char_bitmap_direct = 5'b10001;
-                    3'd6: get_char_bitmap_direct = 5'b01110;
-                    default: get_char_bitmap_direct = 5'b00000;
-                endcase
-                default: get_char_bitmap_direct = 5'b00000;
+                default: get_char_bmp = 5'b00000; // Represents a space
             endcase
         end
     endfunction
 
     wire [9:0] rel_x = x - TEXT_X0;
 
-    // Calculate character position using comparison chain (cheaper than division)
-    wire [3:0] char_pos =
-        (rel_x < 10'd12)  ? 4'd0 :
-        (rel_x < 10'd24)  ? 4'd1 :
-        (rel_x < 10'd36)  ? 4'd2 :
-        (rel_x < 10'd48)  ? 4'd3 :
-        (rel_x < 10'd60)  ? 4'd4 :
-        (rel_x < 10'd72)  ? 4'd5 :
-        (rel_x < 10'd84)  ? 4'd6 :
-        (rel_x < 10'd96)  ? 4'd7 :
-        (rel_x < 10'd108) ? 4'd8 :
-        (rel_x < 10'd120) ? 4'd9 :
-        (rel_x < 10'd132) ? 4'd10 :
-        (rel_x < 10'd144) ? 4'd11 : 4'd0;
+    reg [3:0] char_pos;
+    reg [9:0] char_x_offset;
+    reg [9:0] char_y_offset;
 
-    wire [9:0] char_x_offset =
-        (char_pos == 4'd0)  ? rel_x :
-        (char_pos == 4'd1)  ? rel_x - 10'd12 :
-        (char_pos == 4'd2)  ? rel_x - 10'd24 :
-        (char_pos == 4'd3)  ? rel_x - 10'd36 :
-        (char_pos == 4'd4)  ? rel_x - 10'd48 :
-        (char_pos == 4'd5)  ? rel_x - 10'd60 :
-        (char_pos == 4'd6)  ? rel_x - 10'd72 :
-        (char_pos == 4'd7)  ? rel_x - 10'd84 :
-        (char_pos == 4'd8)  ? rel_x - 10'd96 :
-        (char_pos == 4'd9)  ? rel_x - 10'd108 :
-        (char_pos == 4'd10) ? rel_x - 10'd120 :
-        rel_x - 10'd132;
+    always @(*) begin
+        if (rel_x < 10'd12) begin
+            char_pos = 4'd0;
+            char_x_offset = rel_x;
+        end else if (rel_x < 10'd24) begin
+            char_pos = 4'd1;
+            char_x_offset = rel_x - 10'd12;
+        end else if (rel_x < 10'd36) begin
+            char_pos = 4'd2;
+            char_x_offset = rel_x - 10'd24;
+        end else if (rel_x < 10'd48) begin
+            char_pos = 4'd3;
+            char_x_offset = rel_x - 10'd36;
+        end else if (rel_x < 10'd60) begin
+            char_pos = 4'd4;
+            char_x_offset = rel_x - 10'd48;
+        end else if (rel_x < 10'd72) begin
+            char_pos = 4'd5;
+            char_x_offset = rel_x - 10'd60;
+        end else if (rel_x < 10'd84) begin
+            char_pos = 4'd6;
+            char_x_offset = rel_x - 10'd72;
+        end else if (rel_x < 10'd96) begin
+            char_pos = 4'd7;
+            char_x_offset = rel_x - 10'd84;
+        end else if (rel_x < 10'd108) begin
+            char_pos = 4'd8;
+            char_x_offset = rel_x - 10'd96;
+        end else if (rel_x < 10'd120) begin
+            char_pos = 4'd9;
+            char_x_offset = rel_x - 10'd108;
+        end else if (rel_x < 10'd132) begin
+            char_pos = 4'd10;
+            char_x_offset = rel_x - 10'd120;
+        end else begin
+            char_pos = 4'd11;
+            char_x_offset = rel_x - 10'd132;
+        end
+    end
+
+    assign char_y_offset = y - TEXT_Y0;
 
     // Scale down coordinates by 2 to index into base 5x7 bitmap
     wire [2:0] pixel_x = char_x_offset[3:1];
-    // verilator lint_off UNUSEDSIGNAL
-    wire [9:0] temp_y_scaled_full = (y - TEXT_Y0) >> 1;
-    // verilator lint_on UNUSEDSIGNAL
-    wire [2:0] temp_y_scaled = temp_y_scaled_full[2:0];
-    wire [2:0] pixel_y = temp_y_scaled;
+    wire [2:0] pixel_y = char_y_offset[3:1];
 
-    wire [4:0] char_row_data = get_char_bitmap_direct(char_pos, pixel_y);
+    wire [4:0] char_row_data = get_char_bmp(char_pos, pixel_y);
 
-    wire in_text_bounds = (active && (y >= TEXT_Y0) && (y < (TEXT_Y0 + TEXT_HEIGHT)) &&
-                           (rel_x < TOTAL_TEXT_WIDTH) && (char_x_offset < CHAR_WIDTH));
-    wire pixel_on = char_row_data[4 - pixel_x];
-
-    always @(*) begin
-        draw = 1'b0;
-        rgb = 6'b110110;
-
-        if (in_text_bounds && pixel_on) begin
-            draw = 1;
-        end
-    end
+    assign rgb = 6'b110110;
+    assign draw = active && (y >= TEXT_Y0) && (y < (TEXT_Y0 + TEXT_HEIGHT)) && (rel_x < TOTAL_TEXT_WIDTH) && (char_x_offset < CHAR_WIDTH) && char_row_data[4 - pixel_x];
 
 endmodule
