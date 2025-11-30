@@ -236,57 +236,32 @@ module emblem_gen(
     function automatic [6:0] shield_width;
         input [7:0] y_addr;
         begin
-            shield_width = 7'd78;
-
-            if (y_addr < 8'd88) begin
-                shield_width = (y_addr < 8'd83) ? 7'd77 : 7'd76;
-            end else if (y_addr < 8'd96) begin
-                shield_width = (y_addr < 8'd92) ? 7'd75 : 7'd74;
-            end else if (y_addr < 8'd99) begin
-                shield_width = 7'd73;
-            end else if (y_addr < 8'd102) begin
-                shield_width = 7'd72;
-            end else if (y_addr < 8'd105) begin
-                shield_width = 7'd71;
-            end else if (y_addr < 8'd108) begin
-                shield_width = 7'd70;
-            end else if (y_addr < 8'd111) begin
-                shield_width = 7'd69;
-            end else if (y_addr < 8'd114) begin
-                shield_width = 7'd68;
-            end else if (y_addr < 8'd117) begin
-                shield_width = 7'd67;
-            end else if (y_addr < 8'd120) begin
-                shield_width = 7'd66;
-            end else if (y_addr < 8'd123) begin
-                shield_width = 7'd65;
-            end else if (y_addr < 8'd126) begin
-                shield_width = 7'd64;
-            end else if (y_addr < 8'd128) begin
-                shield_width = 7'd63;
-            end else if (y_addr < 8'd130) begin
-                shield_width = 7'd62;
-            end else if (y_addr < 8'd132) begin
-                shield_width = 7'd61;
-            end else if (y_addr < 8'd134) begin
-                shield_width = 7'd60;
-            end else if (y_addr < 8'd136) begin
-                shield_width = 7'd59;
-            end else if (y_addr < 8'd138) begin
-                shield_width = 7'd58;
-            end else if (y_addr < 8'd140) begin
-                shield_width = 7'd57;
-            end else if (y_addr < 8'd142) begin
-                shield_width = 7'd56;
-            end else if (y_addr < 8'd144) begin
-                shield_width = 7'd55;
-            end else if (y_addr < 8'd146) begin
-                shield_width = 7'd54;
-            end else if (y_addr < 8'd156) begin
-                shield_width = 7'd53 - 7'(y_addr - 8'd146);
-            end else begin
-                shield_width = 7'd42 - 7'((y_addr - 8'd156) << 1);
-            end
+            if (y_addr < 8'd83) shield_width = 7'd77;
+            else if (y_addr < 8'd88) shield_width = 7'd76;
+            else if (y_addr < 8'd92) shield_width = 7'd75;
+            else if (y_addr < 8'd96) shield_width = 7'd74;
+            else if (y_addr < 8'd99) shield_width = 7'd73;
+            else if (y_addr < 8'd102) shield_width = 7'd72;
+            else if (y_addr < 8'd105) shield_width = 7'd71;
+            else if (y_addr < 8'd108) shield_width = 7'd70;
+            else if (y_addr < 8'd111) shield_width = 7'd69;
+            else if (y_addr < 8'd114) shield_width = 7'd68;
+            else if (y_addr < 8'd117) shield_width = 7'd67;
+            else if (y_addr < 8'd120) shield_width = 7'd66;
+            else if (y_addr < 8'd123) shield_width = 7'd65;
+            else if (y_addr < 8'd126) shield_width = 7'd64;
+            else if (y_addr < 8'd128) shield_width = 7'd63;
+            else if (y_addr < 8'd130) shield_width = 7'd62;
+            else if (y_addr < 8'd132) shield_width = 7'd61;
+            else if (y_addr < 8'd134) shield_width = 7'd60;
+            else if (y_addr < 8'd136) shield_width = 7'd59;
+            else if (y_addr < 8'd138) shield_width = 7'd58;
+            else if (y_addr < 8'd140) shield_width = 7'd57;
+            else if (y_addr < 8'd142) shield_width = 7'd56;
+            else if (y_addr < 8'd144) shield_width = 7'd55;
+            else if (y_addr < 8'd146) shield_width = 7'd54;
+            else if (y_addr < 8'd156) shield_width = 7'd53 - 7'(y_addr - 8'd146);
+            else shield_width = 7'd42 - 7'((y_addr - 8'd156) << 1);
         end
     endfunction
 
