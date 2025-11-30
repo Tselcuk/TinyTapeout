@@ -37,9 +37,12 @@ module spiral_gen (
 
     // Create spiral by subtracting radius from angle
     wire [6:0] radius_scaled = {1'b0, radius[9:4]};
-    // verilator lint_off UNUSEDSIGNAL
+
+    // Rational: We are not using spiral_phase[2:0], but as that is only three bits, we can safely ignore the warning
+    /* verilator lint_off UNUSEDSIGNAL */
     wire [6:0] spiral_phase = {1'b0, angle} - radius_scaled;
-    // verilator lint_on UNUSEDSIGNAL
+    /* verilator lint_on UNUSEDSIGNAL */
+    
     wire in_arm = (spiral_phase[3] == 0) && (spiral_phase[6:4] < 6) && (radius > 20);
 
     // Color lookup table for 6 arms

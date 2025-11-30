@@ -6,13 +6,9 @@ module waterloo_text_gen(
     output reg [5:0] rgb
 );
     localparam [9:0] TEXT_Y0 = 325;
-    localparam [9:0] TEXT_HEIGHT = 14;
-    localparam [9:0] CHAR_WIDTH = 10;
-    localparam [9:0] CHAR_SPACING = 2;
-
-    localparam [9:0] TEXT_CENTER_X = 320;
-    localparam [9:0] TOTAL_TEXT_WIDTH = 12 * CHAR_WIDTH + 11 * CHAR_SPACING;
-    localparam [9:0] TEXT_X0 = TEXT_CENTER_X - (TOTAL_TEXT_WIDTH >> 1);
+    localparam [9:0] CHAR_WIDTH = 10;  // Character width in pixels (scaled by 2)
+    localparam [9:0] TOTAL_TEXT_WIDTH = 132;  // 12 chars * 10px + 11 spaces * 2px
+    localparam [9:0] TEXT_X0 = 320 - (TOTAL_TEXT_WIDTH >> 1);  // Centered at x=320
 
     // Direct position-to-bitmap lookup
     // This compresses the transistors required by taking advantage of default values
@@ -88,43 +84,18 @@ module waterloo_text_gen(
     /* verilator lint_on UNUSEDSIGNAL */
 
     always @(*) begin
-        if (rel_x < 10'd12) begin
-            char_pos = 4'd0;
-            char_x_offset = rel_x;
-        end else if (rel_x < 10'd24) begin
-            char_pos = 4'd1;
-            char_x_offset = rel_x - 10'd12;
-        end else if (rel_x < 10'd36) begin
-            char_pos = 4'd2;
-            char_x_offset = rel_x - 10'd24;
-        end else if (rel_x < 10'd48) begin
-            char_pos = 4'd3;
-            char_x_offset = rel_x - 10'd36;
-        end else if (rel_x < 10'd60) begin
-            char_pos = 4'd4;
-            char_x_offset = rel_x - 10'd48;
-        end else if (rel_x < 10'd72) begin
-            char_pos = 4'd5;
-            char_x_offset = rel_x - 10'd60;
-        end else if (rel_x < 10'd84) begin
-            char_pos = 4'd6;
-            char_x_offset = rel_x - 10'd72;
-        end else if (rel_x < 10'd96) begin
-            char_pos = 4'd7;
-            char_x_offset = rel_x - 10'd84;
-        end else if (rel_x < 10'd108) begin
-            char_pos = 4'd8;
-            char_x_offset = rel_x - 10'd96;
-        end else if (rel_x < 10'd120) begin
-            char_pos = 4'd9;
-            char_x_offset = rel_x - 10'd108;
-        end else if (rel_x < 10'd132) begin
-            char_pos = 4'd10;
-            char_x_offset = rel_x - 10'd120;
-        end else begin
-            char_pos = 4'd11;
-            char_x_offset = rel_x - 10'd132;
-        end
+        if      (rel_x < 12*1)  begin char_pos = 4'd0;  char_x_offset = rel_x - 12*0;  end
+        else if (rel_x < 12*2)  begin char_pos = 4'd1;  char_x_offset = rel_x - 12*1;  end
+        else if (rel_x < 12*3)  begin char_pos = 4'd2;  char_x_offset = rel_x - 12*2;  end
+        else if (rel_x < 12*4)  begin char_pos = 4'd3;  char_x_offset = rel_x - 12*3;  end
+        else if (rel_x < 12*5)  begin char_pos = 4'd4;  char_x_offset = rel_x - 12*4;  end
+        else if (rel_x < 12*6)  begin char_pos = 4'd5;  char_x_offset = rel_x - 12*5;  end
+        else if (rel_x < 12*7)  begin char_pos = 4'd6;  char_x_offset = rel_x - 12*6;  end
+        else if (rel_x < 12*8)  begin char_pos = 4'd7;  char_x_offset = rel_x - 12*7;  end
+        else if (rel_x < 12*9)  begin char_pos = 4'd8;  char_x_offset = rel_x - 12*8;  end
+        else if (rel_x < 12*10) begin char_pos = 4'd9;  char_x_offset = rel_x - 12*9;  end
+        else if (rel_x < 12*11) begin char_pos = 4'd10; char_x_offset = rel_x - 12*10; end
+        else                    begin char_pos = 4'd11; char_x_offset = rel_x - 12*11; end
     end
 
     // Rational: We only need the bottom 4 bits of y - TEXT_Y0, so we can safely ignore the warning
@@ -139,6 +110,6 @@ module waterloo_text_gen(
     wire [4:0] char_row_data = get_char_bmp(char_pos, pixel_y);
 
     assign rgb = 6'b110110;
-    assign draw = active && (y >= TEXT_Y0) && (y < (TEXT_Y0 + TEXT_HEIGHT)) && (rel_x < TOTAL_TEXT_WIDTH) && (char_x_offset < CHAR_WIDTH) && char_row_data[4 - pixel_x];
+    assign draw = active && (y >= TEXT_Y0) && (y < TEXT_Y0 + 14) && (rel_x < TOTAL_TEXT_WIDTH) && (char_x_offset < CHAR_WIDTH) && char_row_data[4 - pixel_x];
 
 endmodule

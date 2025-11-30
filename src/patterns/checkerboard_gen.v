@@ -23,6 +23,8 @@ module checkerboard_gen (
         end
     end
 
+    // Rational: We only use shifted_x_low[5] (the MSB), not shifted_x_low[4:0]. However, we need to compute
+    // the full addition using frame_offset[4:0] to get the correct carry into bit 5.
     /* verilator lint_off UNUSEDSIGNAL */
     wire [5:0] shifted_x_low = x + {frame_offset[4:0], 1'b0}; // This shifts the x coordinate by the frame offset
     /* verilator lint_on UNUSEDSIGNAL */

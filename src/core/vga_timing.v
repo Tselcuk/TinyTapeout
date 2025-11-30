@@ -7,7 +7,6 @@ module vga_timing (
     output reg [9:0] x,
     output reg [9:0] y
 );
-
     // Horizontal timing parameters (in pixel clocks)
     // H_FRONT = 16, H_SYNC = 96, H_BACK = 48
     localparam H_DISPLAY = 640;

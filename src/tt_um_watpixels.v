@@ -1,4 +1,5 @@
 module tt_um_watpixels (
+    // Rational: While we are not using all of the inputs, we still need to declare them for tinytapeout
     /* verilator lint_off UNUSEDSIGNAL */
     input wire [7:0] ui_in,   // Dedicated inputs
     output wire [7:0] uo_out, // Dedicated outputs

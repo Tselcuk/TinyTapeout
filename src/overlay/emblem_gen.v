@@ -9,8 +9,7 @@ module emblem_gen(
     localparam [9:0] EMBLEM_X0 = 240;
     localparam [9:0] EMBLEM_X1 = 400;
     localparam [9:0] EMBLEM_Y0 = 144;
-    localparam [9:0] EMBLEM_Y1 = 320;
-    localparam [9:0] EMBLEM_CENTER_X = (EMBLEM_X0 + EMBLEM_X1) >> 1;
+    localparam [9:0] EMBLEM_CENTER_X = 320;  // (240 + 400) / 2
 
     localparam [5:0] COLOR_BLACK = 6'b000000;
     localparam [5:0] COLOR_GOLD = 6'b110110;
@@ -22,17 +21,13 @@ module emblem_gen(
     // Chevron parameters
     // Original bitmap: 85 pixels wide, 100 pixels tall
     // Scaled 2x for display: 170 pixels wide, 200 pixels tall
-    localparam [9:0] CHEVRON_BITMAP_WIDTH = 85;
-    localparam [9:0] CHEVRON_BITMAP_HEIGHT = 100;
-    localparam [9:0] CHEVRON_SCALE = 2;  // 2x scale
-    localparam [9:0] CHEVRON_WIDTH = CHEVRON_BITMAP_WIDTH * CHEVRON_SCALE;  // 170 pixels
-    localparam [9:0] CHEVRON_HEIGHT = CHEVRON_BITMAP_HEIGHT * CHEVRON_SCALE;  // 200 pixels
-    localparam [9:0] CHEVRON_X = EMBLEM_CENTER_X - (CHEVRON_WIDTH >> 1);
-    localparam [9:0] CHEVRON_Y = EMBLEM_Y0;  // Positioned at top of emblem
+    localparam [9:0] CHEVRON_WIDTH = 170;   // 85 * 2 (scaled 2x for display)
+    localparam [9:0] CHEVRON_HEIGHT = 200;  // 100 * 2 (scaled 2x for display)
+    localparam [9:0] CHEVRON_X = 235;  // Center_x - width/2 = 320 - 85
+    localparam [9:0] CHEVRON_Y = EMBLEM_Y0;
     localparam [6:0] CHEVRON_BITMAP_MIN_ROW = 7'd37;
     localparam [6:0] CHEVRON_BITMAP_MAX_ROW = 7'd76;
 
-    localparam integer LION_WIDTH_PIX = 48;
     localparam [9:0] LION_WIDTH = 48;
     localparam [9:0] LION_HEIGHT = 45;
     localparam [9:0] TOP_LION_Y = EMBLEM_Y0 + 16;
@@ -41,7 +36,7 @@ module emblem_gen(
     localparam [9:0] RIGHT_LION_X = EMBLEM_X1 - 20 - LION_WIDTH;
     localparam [9:0] CENTER_LION_X = EMBLEM_CENTER_X - (LION_WIDTH >> 1);
 
-    function automatic [LION_WIDTH_PIX-1:0] lion_row;
+    function automatic [LION_WIDTH-1:0] lion_row;
         input [5:0] idx;
         begin
             case (idx)
@@ -136,7 +131,7 @@ module emblem_gen(
     end
 
     // Look up the pixel from the bitmap ROM only if it was inside one of the lion boxes
-    wire [LION_WIDTH_PIX-1:0] lion_mask;
+    wire [LION_WIDTH-1:0] lion_mask;
     assign lion_mask = lion_row(lion_row_offset[5:0]);
     assign is_lion_pixel = lion_box_hit ? lion_mask[lion_col_offset[5:0]] : 1'b0;
 
@@ -275,7 +270,7 @@ module emblem_gen(
         abs_dx = (x >= EMBLEM_CENTER_X) ? (x - EMBLEM_CENTER_X) : (EMBLEM_CENTER_X - x);
         rel_y = y - EMBLEM_Y0;
 
-        if (active && (y >= EMBLEM_Y0) && (y < EMBLEM_Y1)) begin
+        if (active && (y >= EMBLEM_Y0) && (y < 320)) begin  // Shield bottom at y=320
             half_width = shield_width(rel_y[7:0]);
             if (abs_dx <= {3'b0, half_width}) begin
                 draw_flag = 1;
