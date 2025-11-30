@@ -101,40 +101,35 @@ module emblem_gen(
     reg lion_box_hit;
 
     always @(*) begin
-        reg [9:0] temp_col;
-        reg [9:0] temp_row;
-        
         lion_box_hit = 0;
         lion_col_offset = 0;
         lion_row_offset = 0;
-        temp_col = 0;
-        temp_row = 0;
 
         // Check if the pixel is within the Y-range of the top two lions
         if (y >= TOP_LION_Y && y < (TOP_LION_Y + LION_HEIGHT)) begin
             // Check for top-left lion
             if (x >= LEFT_LION_X && x < (LEFT_LION_X + LION_WIDTH)) begin
-                temp_col = x - LEFT_LION_X;
-                temp_row = y - TOP_LION_Y;
-                lion_col_offset = temp_col[5:0];
-                lion_row_offset = temp_row[5:0];
+                /* verilator lint_off WIDTH */
+                lion_col_offset = (x - LEFT_LION_X);
+                lion_row_offset = (y - TOP_LION_Y);
+                /* verilator lint_on WIDTH */
                 lion_box_hit = 1;
             // Check for top-right lion
             end else if (x >= RIGHT_LION_X && x < (RIGHT_LION_X + LION_WIDTH)) begin
-                temp_col = x - RIGHT_LION_X;
-                temp_row = y - TOP_LION_Y;
-                lion_col_offset = temp_col[5:0];
-                lion_row_offset = temp_row[5:0];
+                /* verilator lint_off WIDTH */
+                lion_col_offset = x - RIGHT_LION_X;
+                lion_row_offset = y - TOP_LION_Y;
+                /* verilator lint_on WIDTH */
                 lion_box_hit = 1;
             end
         // Check if the pixel is within the Y-range of the bottom lion
         end else if (y >= BOTTOM_LION_Y && y < (BOTTOM_LION_Y + LION_HEIGHT)) begin
             // Check for bottom lion
             if (x >= CENTER_LION_X && x < (CENTER_LION_X + LION_WIDTH)) begin
-                temp_col = x - CENTER_LION_X;
-                temp_row = y - BOTTOM_LION_Y;
-                lion_col_offset = temp_col[5:0];
-                lion_row_offset = temp_row[5:0];
+                /* verilator lint_off WIDTH */
+                lion_col_offset = x - CENTER_LION_X;
+                lion_row_offset = y - BOTTOM_LION_Y;
+                /* verilator lint_on WIDTH */
                 lion_box_hit = 1;
             end
         end
@@ -202,23 +197,18 @@ module emblem_gen(
     wire chevron_row_in_range;
 
     always @(*) begin
-        reg [9:0] temp_scaled_col;
-        reg [9:0] temp_scaled_row;
-        
-        chevron_box_hit = 1'b0;
+        chevron_box_hit = 0;
         chevron_scaled_col = 0;
         chevron_scaled_row = 0;
-        temp_scaled_col = 0;
-        temp_scaled_row = 0;
 
         // Check if the pixel is within the chevron bounds (scaled)
         if (y >= CHEVRON_Y && y < (CHEVRON_Y + CHEVRON_HEIGHT) &&
             x >= CHEVRON_X && x < (CHEVRON_X + CHEVRON_WIDTH)) begin
             // Scale down to original bitmap coordinates (divide by scale factor)
-            temp_scaled_col = (x - CHEVRON_X) >> 1;
-            temp_scaled_row = (y - CHEVRON_Y) >> 1;
-            chevron_scaled_col = temp_scaled_col[6:0];
-            chevron_scaled_row = temp_scaled_row[6:0];
+            /* verilator lint_off WIDTH */
+            chevron_scaled_col = (x - CHEVRON_X) >> 1;
+            chevron_scaled_row = (y - CHEVRON_Y) >> 1;
+            /* verilator lint_on WIDTH */
             chevron_box_hit = 1;
         end
     end
