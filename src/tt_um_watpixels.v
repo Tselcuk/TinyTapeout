@@ -82,7 +82,6 @@ module tt_um_watpixels (
       .rst(rst),
       .x(x_pos),
       .y(y_pos),
-      .active(active),
       .vsync(vsync),
       .paused(paused),
       .step_size(step_size),
@@ -108,7 +107,10 @@ module tt_um_watpixels (
   );
 
   // Blend overlays with pattern, overlays take priority when they draw
-  assign final_rgb = waterloo_draw ? waterloo_rgb : (emblem_draw ? emblem_rgb : pattern_rgb);
+  // Gate pattern output with active (overlays handle active internally)
+  assign final_rgb = waterloo_draw ? waterloo_rgb :
+                     (emblem_draw ? emblem_rgb :
+                     (active ? pattern_rgb : 6'b0));
 
   // Output Signal Mapping
   assign uo_out[0] = hsync;

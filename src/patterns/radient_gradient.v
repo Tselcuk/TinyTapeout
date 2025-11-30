@@ -4,7 +4,6 @@ module radient_gradient (
     input wire pattern_enable,
     input wire [9:0] x,
     input wire [9:0] y,
-    input wire active,
     input wire next_frame,
     input wire [2:0] step_size,
     output reg [5:0] rgb
@@ -42,23 +41,19 @@ module radient_gradient (
     wire [7:0] ring5_radius = base_radius + 96;
 
     always @(*) begin
-        rgb = 6'b000000;
+        // Default to a deep navy edge.
+        rgb = 6'b000001; // NAVY_EDGE
 
-        if (active) begin
-            // Default to a deep navy edge.
-            rgb = 6'b000001; // NAVY_EDGE
-
-            if (manhattan_distance <= {2'b0, ring1_radius}) begin
-                rgb = 6'b101101; // MAGENTA_CORE
-            end else if (manhattan_distance <= {2'b0, ring2_radius}) begin
-                rgb = 6'b101100; // MAGENTA_GLOW
-            end else if (manhattan_distance <= {2'b0, ring3_radius}) begin
-                rgb = 6'b101000; // MAGENTA_INNER_RING
-            end else if (manhattan_distance <= {2'b0, ring4_radius}) begin
-                rgb = 6'b001100; // MAGENTA_OUTER_RING
-            end else if (manhattan_distance <= {2'b0, ring5_radius}) begin
-                rgb = 6'b001000; // BLUE_HALO
-            end
+        if (manhattan_distance <= {2'b0, ring1_radius}) begin
+            rgb = 6'b101101; // MAGENTA_CORE
+        end else if (manhattan_distance <= {2'b0, ring2_radius}) begin
+            rgb = 6'b101100; // MAGENTA_GLOW
+        end else if (manhattan_distance <= {2'b0, ring3_radius}) begin
+            rgb = 6'b101000; // MAGENTA_INNER_RING
+        end else if (manhattan_distance <= {2'b0, ring4_radius}) begin
+            rgb = 6'b001100; // MAGENTA_OUTER_RING
+        end else if (manhattan_distance <= {2'b0, ring5_radius}) begin
+            rgb = 6'b001000; // BLUE_HALO
         end
     end
 

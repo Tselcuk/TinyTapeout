@@ -5,7 +5,6 @@ module checkerboard_gen (
     input wire pattern_enable,
     input wire [5:0] x,
     input wire y_bit5,
-    input wire active,
     input wire next_frame,
     input wire [2:0] step_size,
     output reg [5:0] rgb
@@ -31,7 +30,7 @@ module checkerboard_gen (
     wire tile_select = shifted_x_low[5] ^ y_bit5; // This is the part that actually creates the checkerboard pattern
 
     always @(*) begin
-        rgb = (active && tile_select) ? 6'b100100 : 6'b000000;
+        rgb = tile_select ? 6'b100100 : 6'b000000;
     end
 
 endmodule

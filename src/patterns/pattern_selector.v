@@ -4,7 +4,6 @@ module pattern_selector (
     input wire rst,
     input wire [9:0] x,
     input wire [9:0] y,
-    input wire active,
     input wire vsync,
     input wire paused,
     input wire [2:0] step_size,
@@ -31,11 +30,6 @@ module pattern_selector (
             default:              frames_for_current_pattern = 240;
         endcase
     end
-
-    // Pre-compute which pattern is selected (used multiple times below)
-    wire checkerboard_selected = (pattern_select == PATTERN_CHECKERBOARD);
-    wire radient_selected = (pattern_select == PATTERN_RADIENT);
-    wire spiral_selected = (pattern_select == PATTERN_SPIRAL);
 
     // Track VGA frame advances and defer pattern switches to the next frame origin.
     // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse).
@@ -68,11 +62,10 @@ module pattern_selector (
     checkerboard_gen u_checkerboard_gen(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(checkerboard_selected),
+        .pattern_enable(pattern_select == PATTERN_CHECKERBOARD),
         .x(x[5:0]),
         .y_bit5(y[5]),
-        .active(checkerboard_selected ? active : 0),
-        .next_frame(checkerboard_selected ? animation_trigger : 0),
+        .next_frame((pattern_select == PATTERN_CHECKERBOARD) ? animation_trigger : 0),
         .step_size(step_size),
         .rgb(checkboard_rgb)
     );
@@ -80,11 +73,10 @@ module pattern_selector (
     radient_gradient u_radient_gradient(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(radient_selected),
+        .pattern_enable(pattern_select == PATTERN_RADIENT),
         .x(x),
         .y(y),
-        .active(radient_selected ? active : 0),
-        .next_frame(radient_selected ? animation_trigger : 0),
+        .next_frame((pattern_select == PATTERN_RADIENT) ? animation_trigger : 0),
         .step_size(step_size),
         .rgb(radient_rgb)
     );
@@ -92,11 +84,10 @@ module pattern_selector (
     spiral_gen u_spiral_gen(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(spiral_selected),
+        .pattern_enable(pattern_select == PATTERN_SPIRAL),
         .x(x),
         .y(y),
-        .active(spiral_selected ? active : 0),
-        .next_frame(spiral_selected ? animation_trigger : 0),
+        .next_frame((pattern_select == PATTERN_SPIRAL) ? animation_trigger : 0),
         .step_size(step_size),
         .rgb(spiral_rgb)
     );

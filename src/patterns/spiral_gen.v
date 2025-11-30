@@ -5,7 +5,6 @@ module spiral_gen (
     input wire pattern_enable,
     input wire [9:0] x,
     input wire [9:0] y,
-    input wire active,
     input wire next_frame,
     input wire [2:0] step_size,
     output wire [5:0] rgb
@@ -53,6 +52,6 @@ module spiral_gen (
         (spiral_phase[6:4] == 4) ? 6'b011101 :  // Arm 4: Cyan-green
         6'b101111;                              // Arm 5: Magenta-white
 
-    assign rgb = active && in_arm ? arm_color : 6'b000000;
+    assign rgb = in_arm ? arm_color : 6'b000000;
 
 endmodule
