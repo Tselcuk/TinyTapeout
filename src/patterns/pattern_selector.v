@@ -22,9 +22,9 @@ module pattern_selector (
 
     localparam [9:0] FRAMES_PER_PATTERN = 300;
 
-    wire checkerboard_next = (pattern_select == PATTERN_CHECKERBOARD) ? animation_trigger : 0;
-    wire radient_next = (pattern_select == PATTERN_RADIENT) ? animation_trigger : 0;
-    wire spiral_next = (pattern_select == PATTERN_SPIRAL) ? animation_trigger : 0;
+    wire checkerboard_next = (pattern_select == PATTERN_CHECKERBOARD) && animation_trigger;
+    wire radient_next = (pattern_select == PATTERN_RADIENT) && animation_trigger;
+    wire spiral_next = (pattern_select == PATTERN_SPIRAL) && animation_trigger;
 
     // Track VGA frame advances and defer pattern switches to the next frame origin.
     // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse).
