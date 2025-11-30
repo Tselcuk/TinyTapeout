@@ -20,16 +20,8 @@ module pattern_selector (
     wire [5:0] radient_rgb;
     wire [5:0] spiral_rgb;
 
-    // Compute how long the current pattern should display
-    reg [9:0] frames_for_current_pattern;
-    always @(*) begin
-        case (pattern_select)
-            PATTERN_CHECKERBOARD: frames_for_current_pattern = 240; // 4 seconds
-            PATTERN_RADIENT:      frames_for_current_pattern = 480; // 8 seconds
-            PATTERN_SPIRAL:       frames_for_current_pattern = 360; // 6 seconds
-            default:              frames_for_current_pattern = 240;
-        endcase
-    end
+    // Each pattern displays for 300 frames (5 seconds at 60 FPS)
+    localparam [9:0] FRAMES_PER_PATTERN = 300;
 
     // Track VGA frame advances and defer pattern switches to the next frame origin.
     // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse).
@@ -53,7 +45,7 @@ module pattern_selector (
             pattern_wrap_pulse <= 0; // Default to 0, pulse for one cycle
 
             if (vsync_rising) begin
-                if (frame_counter == frames_for_current_pattern - 1) begin
+                if (frame_counter == FRAMES_PER_PATTERN - 1) begin
                     // Time to switch to next pattern
                     frame_counter <= 0;
                     if (pattern_select == 2) begin
