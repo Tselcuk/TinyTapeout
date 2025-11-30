@@ -213,14 +213,17 @@ module emblem_gen(
         end
     end
 
-    wire [6:0] chevron_row_idx;
+    wire [5:0] chevron_row_idx;
     wire [6:0] chevron_bit_idx;
     wire [95:0] chevron_mask;
     
     assign chevron_row_in_range = (chevron_scaled_row >= CHEVRON_BITMAP_MIN_ROW) && (chevron_scaled_row <= CHEVRON_BITMAP_MAX_ROW);
+    // Rational: We only need the bottom 6 bits of chevron_scaled_row - CHEVRON_BITMAP_MIN_ROW, so we can safely ignore the warning
+    /* verilator lint_off WIDTH */
     assign chevron_row_idx = chevron_scaled_row - CHEVRON_BITMAP_MIN_ROW;
-    assign chevron_bit_idx = 7'd95 - chevron_scaled_col[6:0];
-    assign chevron_mask = chevron_row_in_range ? chevron_row(chevron_row_idx[5:0]) : 96'h0;
+    /* verilator lint_on WIDTH */
+    assign chevron_bit_idx = 95 - chevron_scaled_col;
+    assign chevron_mask = chevron_row_in_range ? chevron_row(chevron_row_idx) : 0;
     assign is_chevron_pixel = (chevron_box_hit && chevron_row_in_range) ? chevron_mask[chevron_bit_idx] : 1'b0;
 
     function automatic [6:0] shield_width;

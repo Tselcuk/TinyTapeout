@@ -81,7 +81,11 @@ module waterloo_text_gen(
 
     reg [3:0] char_pos;
     reg [9:0] char_x_offset;
-    reg [9:0] char_y_offset;
+
+    // Rational: We are not using char_y_offset[0], but as that is only one bit, we can safely ignore the warning
+    /* verilator lint_off UNUSEDSIGNAL */
+    reg [3:0] char_y_offset;
+    /* verilator lint_on UNUSEDSIGNAL */
 
     always @(*) begin
         if (rel_x < 10'd12) begin
@@ -123,7 +127,10 @@ module waterloo_text_gen(
         end
     end
 
+    // Rational: We only need the bottom 4 bits of y - TEXT_Y0, so we can safely ignore the warning
+    /* verilator lint_off WIDTH */
     assign char_y_offset = y - TEXT_Y0;
+    /* verilator lint_on WIDTH */
 
     // Scale down coordinates by 2 to index into base 5x7 bitmap
     wire [2:0] pixel_x = char_x_offset[3:1];
