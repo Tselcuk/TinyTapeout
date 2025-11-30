@@ -39,19 +39,29 @@ module pattern_selector (
     wire vsync_rising = vsync && !vsync_q; // Rising edge of vsync signals next frame
     wire animation_trigger = vsync_rising && !paused;
 
+    // Detect when we wrap back to first pattern
+    reg pattern_wrap_pulse;
+
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             pattern_select <= PATTERN_CHECKERBOARD;
-            frame_counter  <= 0;
+            frame_counter <= 0;
             vsync_q <= 1;
+            pattern_wrap_pulse <= 0;
         end else begin
             vsync_q <= vsync;
+            pattern_wrap_pulse <= 0; // Default to 0, pulse for one cycle
 
             if (vsync_rising) begin
                 if (frame_counter == frames_for_current_pattern - 1) begin
                     // Time to switch to next pattern
                     frame_counter <= 0;
-                    pattern_select <= (pattern_select == 2'd2) ? 2'd0 : pattern_select + 2'd1;
+                    if (pattern_select == 2) begin
+                        pattern_select <= 0;
+                        pattern_wrap_pulse <= 1; // Reset patterns when wrapping
+                    end else begin
+                        pattern_select <= pattern_select + 1;
+                    end
                 end else begin
                     frame_counter <= frame_counter + 1;
                 end
@@ -59,9 +69,12 @@ module pattern_selector (
         end
     end
 
+    // Combined reset
+    wire pattern_rst = rst || pattern_wrap_pulse;
+
     checkerboard_gen u_checkerboard_gen(
         .clk(clk),
-        .rst(rst),
+        .rst(pattern_rst),
         .x(x[5:0]),
         .y_bit5(y[5]),
         .next_frame((pattern_select == PATTERN_CHECKERBOARD) ? animation_trigger : 0),
@@ -71,7 +84,7 @@ module pattern_selector (
 
     radient_gradient u_radient_gradient(
         .clk(clk),
-        .rst(rst),
+        .rst(pattern_rst),
         .x(x),
         .y(y),
         .next_frame((pattern_select == PATTERN_RADIENT) ? animation_trigger : 0),
@@ -81,7 +94,7 @@ module pattern_selector (
 
     spiral_gen u_spiral_gen(
         .clk(clk),
-        .rst(rst),
+        .rst(pattern_rst),
         .x(x),
         .y(y),
         .next_frame((pattern_select == PATTERN_SPIRAL) ? animation_trigger : 0),
