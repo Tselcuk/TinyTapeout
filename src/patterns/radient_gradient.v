@@ -27,33 +27,26 @@ module radient_gradient (
     wire signed [10:0] sx = $signed({1'b0, x}) - $signed({1'b0, 10'd320}); // CENTER_X = 320
     wire signed [10:0] sy = $signed({1'b0, y}) - $signed({1'b0, 10'd240}); // CENTER_Y = 240
 
-    // Optimized absolute value using 10 bits (max values: 320, 240 fit in 9 bits)
     wire [9:0] manhattan_distance = (sx[10] ? (~sx[9:0] + 1) : sx[9:0]) + (sy[10] ? (~sy[9:0] + 1) : sy[9:0]);
 
-    wire [7:0] base_radius = 30 + frame_counter[7:1]; // This is what expands the pattern outwards
+    wire [9:0] base_radius = 10'd30 + {1'b0, frame_counter[8:0]}; // Expands the pattern outwards
 
     // Concentric ring radii (inner to outer) - Using Manhattan distance
-    wire [7:0] ring1_radius = (base_radius > 24) ? (base_radius - 24) : 0;
-    wire [7:0] ring2_radius = base_radius + 24;
-    wire [7:0] ring3_radius = base_radius + 48;
-    wire [7:0] ring4_radius = base_radius + 72;
-    wire [7:0] ring5_radius = base_radius + 96;
+    wire [9:0] ring1_radius = (base_radius > 24) ? (base_radius - 24) : 0;
+    wire [9:0] ring2_radius = base_radius + 24;
+    wire [9:0] ring3_radius = base_radius + 48;
+    wire [9:0] ring4_radius = base_radius + 72;
+    wire [9:0] ring5_radius = base_radius + 96;
 
     always @(*) begin
         // Default to a deep navy edge.
         rgb = 6'b000001; // NAVY_EDGE
 
-        if (manhattan_distance <= {2'b0, ring1_radius}) begin
-            rgb = 6'b101101; // MAGENTA_CORE
-        end else if (manhattan_distance <= {2'b0, ring2_radius}) begin
-            rgb = 6'b101100; // MAGENTA_GLOW
-        end else if (manhattan_distance <= {2'b0, ring3_radius}) begin
-            rgb = 6'b101000; // MAGENTA_INNER_RING
-        end else if (manhattan_distance <= {2'b0, ring4_radius}) begin
-            rgb = 6'b001100; // MAGENTA_OUTER_RING
-        end else if (manhattan_distance <= {2'b0, ring5_radius}) begin
-            rgb = 6'b001000; // BLUE_HALO
-        end
+        if (manhattan_distance <= ring1_radius) rgb = 6'b101101; // MAGENTA_CORE
+        else if (manhattan_distance <= ring2_radius) rgb = 6'b101100; // MAGENTA_GLOW
+        else if (manhattan_distance <= ring3_radius) rgb = 6'b101000; // MAGENTA_INNER_RING
+        else if (manhattan_distance <= ring4_radius) rgb = 6'b001100; // MAGENTA_OUTER_RING
+        else if (manhattan_distance <= ring5_radius) rgb = 6'b001000; // BLUE_HALO
     end
 
 endmodule
