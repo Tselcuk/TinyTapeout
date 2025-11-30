@@ -20,7 +20,6 @@ module pattern_selector (
     wire [5:0] radient_rgb;
     wire [5:0] spiral_rgb;
 
-    // Each pattern displays for 300 frames (5 seconds at 60 FPS)
     localparam [9:0] FRAMES_PER_PATTERN = 300;
 
     // Track VGA frame advances and defer pattern switches to the next frame origin.
@@ -95,12 +94,10 @@ module pattern_selector (
     );
 
     always @(*) begin
-        case (pattern_select)
-            PATTERN_CHECKERBOARD: rgb = checkboard_rgb;
-            PATTERN_RADIENT: rgb = radient_rgb;
-            PATTERN_SPIRAL: rgb = spiral_rgb;
-            default: rgb = 6'b000000;
-        endcase
+        if (pattern_select == PATTERN_CHECKERBOARD) rgb = checkboard_rgb;
+        else if (pattern_select == PATTERN_RADIENT) rgb = radient_rgb;
+        else if (pattern_select == PATTERN_SPIRAL) rgb = spiral_rgb;
+        else rgb = 6'b000000;
     end
 
 endmodule

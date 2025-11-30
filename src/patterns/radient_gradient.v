@@ -10,7 +10,7 @@ module radient_gradient (
     reg [9:0] frame_counter;
     reg [1:0] subframe_accum;
 
-    wire [2:0] frac_sum = {1'b0, subframe_accum} + {1'b0, step_size[1:0]};
+    wire [2:0] frac_sum = {1'b0, subframe_accum} + step_size[1:0];
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -31,7 +31,7 @@ module radient_gradient (
 
     wire [9:0] base_radius = 10'd30 + {1'b0, frame_counter[8:0]}; // Expands the pattern outwards
 
-    // Concentric ring radii (inner to outer) - Using Manhattan distance
+    // Concentric ring radii (inner to outer)
     wire [9:0] ring1_radius = (base_radius > 24) ? (base_radius - 24) : 0;
     wire [9:0] ring2_radius = base_radius + 24;
     wire [9:0] ring3_radius = base_radius + 48;
@@ -39,7 +39,6 @@ module radient_gradient (
     wire [9:0] ring5_radius = base_radius + 96;
 
     always @(*) begin
-        // Default to a deep navy edge.
         rgb = 6'b000001; // NAVY_EDGE
 
         if (manhattan_distance <= ring1_radius) rgb = 6'b101101; // MAGENTA_CORE
