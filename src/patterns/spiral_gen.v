@@ -2,7 +2,6 @@
 module spiral_gen (
     input wire clk,
     input wire rst,
-    input wire pattern_enable,
     input wire [9:0] x,
     input wire [9:0] y,
     input wire next_frame,
@@ -19,7 +18,7 @@ module spiral_gen (
         if (rst) begin // Reset the rotation offset and subframe accumulator
             rotation_offset <= 0;
             subframe_accum <= 0;
-        end else if (pattern_enable && next_frame) begin
+        end else if (next_frame) begin
             rotation_offset <= rotation_offset + {3'b0, step_size[2], 1'b0} + {3'b0, frac_sum[2], 1'b0};
             subframe_accum <= frac_sum[1:0];
         end

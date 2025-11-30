@@ -1,7 +1,6 @@
 module radient_gradient (
     input wire clk,
     input wire rst,
-    input wire pattern_enable,
     input wire [9:0] x,
     input wire [9:0] y,
     input wire next_frame,
@@ -17,7 +16,7 @@ module radient_gradient (
         if (rst) begin
             frame_counter <= 0;
             subframe_accum <= 0;
-        end else if (pattern_enable && next_frame) begin
+        end else if (next_frame) begin
             frame_counter <= frame_counter + {9'b0, step_size[2]} + {9'b0, frac_sum[2]};
             subframe_accum <= frac_sum[1:0];
         end

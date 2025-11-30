@@ -62,7 +62,6 @@ module pattern_selector (
     checkerboard_gen u_checkerboard_gen(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(pattern_select == PATTERN_CHECKERBOARD),
         .x(x[5:0]),
         .y_bit5(y[5]),
         .next_frame((pattern_select == PATTERN_CHECKERBOARD) ? animation_trigger : 0),
@@ -73,7 +72,6 @@ module pattern_selector (
     radient_gradient u_radient_gradient(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(pattern_select == PATTERN_RADIENT),
         .x(x),
         .y(y),
         .next_frame((pattern_select == PATTERN_RADIENT) ? animation_trigger : 0),
@@ -84,7 +82,6 @@ module pattern_selector (
     spiral_gen u_spiral_gen(
         .clk(clk),
         .rst(rst),
-        .pattern_enable(pattern_select == PATTERN_SPIRAL),
         .x(x),
         .y(y),
         .next_frame((pattern_select == PATTERN_SPIRAL) ? animation_trigger : 0),

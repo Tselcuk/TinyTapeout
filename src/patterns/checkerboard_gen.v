@@ -2,7 +2,6 @@
 module checkerboard_gen (
     input wire clk,
     input wire rst,
-    input wire pattern_enable,
     input wire [5:0] x,
     input wire y_bit5,
     input wire next_frame,
@@ -18,7 +17,7 @@ module checkerboard_gen (
         if (rst) begin
             frame_offset <= 0;
             subpixel_accum <= 0;
-        end else if (pattern_enable && next_frame) begin
+        end else if (next_frame) begin
             frame_offset <= frame_offset + {5'b0, step_size[2], 1'b0} + {5'b0, frac_sum[2], 1'b0};
             subpixel_accum <= frac_sum[1:0];
         end
