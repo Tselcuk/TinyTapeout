@@ -33,7 +33,7 @@ module spiral_gen (
     // This will create 8 angle sectors
     wire dx_gt_dy = dx > dy;
     wire [2:0] angle_sector = {(x >= 320), (y >= 240), dx_gt_dy};
-    wire [5:0] rough_angle = angle_sector << 3;
+    wire [5:0] rough_angle = {3'b0, angle_sector} << 3;
 
     // Apply rotation offset
     wire [5:0] angle = rough_angle + rotation_offset;

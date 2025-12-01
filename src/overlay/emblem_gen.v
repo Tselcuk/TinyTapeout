@@ -18,6 +18,7 @@ module emblem_gen(
     localparam [5:0] COLOR_WHITE = 6'b111111;
 
     localparam [9:0] BORDER_THICKNESS = 3;
+    localparam [9:0] CHEVRON_BORDER_THICK = 3;
 
     // Chevron parameters
     // Original bitmap: 85 pixels wide, 100 pixels tall
@@ -28,7 +29,7 @@ module emblem_gen(
     localparam [9:0] CHEVRON_WIDTH = CHEVRON_BITMAP_WIDTH * CHEVRON_SCALE;  // 170 pixels
     localparam [9:0] CHEVRON_HEIGHT = CHEVRON_BITMAP_HEIGHT * CHEVRON_SCALE;  // 200 pixels
     localparam [9:0] CHEVRON_X = EMBLEM_CENTER_X - (CHEVRON_WIDTH >> 1);
-    localparam [9:0] CHEVRON_Y = EMBLEM_Y0;  // Positioned at top of emblem
+    localparam [9:0] CHEVRON_Y = EMBLEM_Y0 - 14;  // Positioned at top of emblem, moved up 4 pixels
     localparam [6:0] CHEVRON_BITMAP_MIN_ROW = 7'd37;
     localparam [6:0] CHEVRON_BITMAP_MAX_ROW = 7'd76;
 
@@ -37,8 +38,8 @@ module emblem_gen(
     localparam [9:0] LION_HEIGHT = 45;
     localparam [9:0] TOP_LION_Y = EMBLEM_Y0 + 16;
     localparam [9:0] BOTTOM_LION_Y = EMBLEM_Y0 + 112;
-    localparam [9:0] LEFT_LION_X = EMBLEM_X0 + 20;
-    localparam [9:0] RIGHT_LION_X = EMBLEM_X1 - 20 - LION_WIDTH;
+    localparam [9:0] LEFT_LION_X = EMBLEM_X0 + 18;  // Moved 2 pixels left to increase spacing
+    localparam [9:0] RIGHT_LION_X = EMBLEM_X1 - 18 - LION_WIDTH;  // Moved 2 pixels right to increase spacing
     localparam [9:0] CENTER_LION_X = EMBLEM_CENTER_X - (LION_WIDTH >> 1);
 
     function automatic [LION_WIDTH_PIX-1:0] lion_row;
@@ -233,6 +234,108 @@ module emblem_gen(
     assign chevron_mask = chevron_row_in_range ? chevron_row(chevron_row_idx[5:0]) : 96'h0;
     assign is_chevron_pixel = (chevron_box_hit && chevron_row_in_range) ? chevron_mask[chevron_bit_idx] : 1'b0;
 
+    // Chevron border detection: check if pixel is within 3 pixels of a chevron pixel
+    // Helper function to check if a pixel at (px, py) is a chevron pixel
+    function automatic is_chevron_at;
+        input [9:0] px;
+        input [9:0] py;
+        reg [9:0] p_col_offset, p_row_offset;
+        reg [6:0] p_scaled_col, p_scaled_row;
+        reg p_box_hit;
+        reg p_row_in_range;
+        reg [6:0] p_row_idx, p_bit_idx;
+        reg [95:0] p_mask;
+        begin
+            is_chevron_at = 1'b0;
+            if (py >= CHEVRON_Y && py < (CHEVRON_Y + CHEVRON_HEIGHT) &&
+                px >= CHEVRON_X && px < (CHEVRON_X + CHEVRON_WIDTH)) begin
+                p_col_offset = (px - CHEVRON_X) >> 1;
+                p_row_offset = (py - CHEVRON_Y) >> 1;
+                p_scaled_col = p_col_offset[6:0];
+                p_scaled_row = p_row_offset[6:0];
+                p_row_in_range = (p_scaled_row >= CHEVRON_BITMAP_MIN_ROW) && 
+                                 (p_scaled_row <= CHEVRON_BITMAP_MAX_ROW);
+                p_row_idx = p_scaled_row - CHEVRON_BITMAP_MIN_ROW;
+                p_bit_idx = 7'd95 - p_scaled_col[6:0];
+                p_mask = p_row_in_range ? chevron_row(p_row_idx[5:0]) : 96'h0;
+                is_chevron_at = p_row_in_range ? p_mask[p_bit_idx] : 1'b0;
+            end
+        end
+    endfunction
+
+    // Check all pixels within Manhattan distance 3 (7x7 grid = 49 pixels, but only check those within distance 3)
+    reg is_chevron_border;
+    reg border_found;
+    
+    always @(*) begin
+        reg nearby_is_chevron;
+        
+        border_found = 1'b0;
+        is_chevron_border = 1'b0;
+        nearby_is_chevron = 1'b0;
+        
+        // Only check for border if we're in the expanded chevron region and not a chevron pixel
+        if (!is_chevron_pixel &&
+            y >= (CHEVRON_Y > CHEVRON_BORDER_THICK ? CHEVRON_Y - CHEVRON_BORDER_THICK : 0) && 
+            y < (CHEVRON_Y + CHEVRON_HEIGHT + CHEVRON_BORDER_THICK) &&
+            x >= (CHEVRON_X > CHEVRON_BORDER_THICK ? CHEVRON_X - CHEVRON_BORDER_THICK : 0) && 
+            x < (CHEVRON_X + CHEVRON_WIDTH + CHEVRON_BORDER_THICK)) begin
+            
+            // Check all offsets within Manhattan distance 3
+            // dx=-3: dy can be 0
+            if (x >= 3 && !border_found) begin
+                nearby_is_chevron = is_chevron_at(x - 3, y);
+                if (nearby_is_chevron) border_found = 1'b1;
+            end
+            
+            // dx=-2: dy can be 0, 1
+            if (!border_found && x >= 2) begin
+                nearby_is_chevron = is_chevron_at(x - 2, y) || is_chevron_at(x - 2, y - 1) || 
+                                    is_chevron_at(x - 2, y + 1);
+                if (nearby_is_chevron) border_found = 1'b1;
+            end
+            
+            // dx=-1: dy can be 0, 1, 2
+            if (!border_found && x >= 1) begin
+                nearby_is_chevron = is_chevron_at(x - 1, y) || is_chevron_at(x - 1, y - 1) || 
+                                    is_chevron_at(x - 1, y + 1) || is_chevron_at(x - 1, y - 2) || 
+                                    is_chevron_at(x - 1, y + 2);
+                if (nearby_is_chevron) border_found = 1'b1;
+            end
+            
+            // dx=0: dy can be 1, 2, 3
+            if (!border_found) begin
+                nearby_is_chevron = is_chevron_at(x, y - 1) || is_chevron_at(x, y + 1) || 
+                                    is_chevron_at(x, y - 2) || is_chevron_at(x, y + 2) ||
+                                    is_chevron_at(x, y - 3) || is_chevron_at(x, y + 3);
+                if (nearby_is_chevron) border_found = 1'b1;
+            end
+            
+            // dx=+1: dy can be 0, 1, 2
+            if (!border_found) begin
+                nearby_is_chevron = is_chevron_at(x + 1, y) || is_chevron_at(x + 1, y - 1) || 
+                                    is_chevron_at(x + 1, y + 1) || is_chevron_at(x + 1, y - 2) || 
+                                    is_chevron_at(x + 1, y + 2);
+                if (nearby_is_chevron) border_found = 1'b1;
+            end
+            
+            // dx=+2: dy can be 0, 1
+            if (!border_found) begin
+                nearby_is_chevron = is_chevron_at(x + 2, y) || is_chevron_at(x + 2, y - 1) || 
+                                    is_chevron_at(x + 2, y + 1);
+                if (nearby_is_chevron) border_found = 1'b1;
+            end
+            
+            // dx=+3: dy can be 0
+            if (!border_found) begin
+                nearby_is_chevron = is_chevron_at(x + 3, y);
+                if (nearby_is_chevron) border_found = 1'b1;
+            end
+        end
+        
+        is_chevron_border = border_found;
+    end
+
     function automatic [6:0] shield_width;
         input [7:0] y_addr;
         begin
@@ -316,6 +419,7 @@ module emblem_gen(
                 inner_half = (half_width > BORDER_THICKNESS[6:0]) ? (half_width - BORDER_THICKNESS[6:0]) : 7'b0;
                 if ((abs_dx > {3'b0, inner_half}) || (rel_y < BORDER_THICKNESS)) shield_border = 1;
 
+                if (is_chevron_border) rgb = COLOR_BLACK;
                 if (is_chevron_pixel) rgb = COLOR_WHITE;
                 if (is_lion_pixel) rgb = COLOR_RED;
                 if (shield_border) rgb = COLOR_BLACK;
