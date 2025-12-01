@@ -46,14 +46,15 @@ module tt_um_watpixels (
   wire [2:0] step_size;
 
   // Emblem Overlay Output
-  wire emblem_draw;
   wire [5:0] emblem_rgb;
 
   // Waterloo Text Overlay Output
-  wire waterloo_draw;
   wire [5:0] waterloo_rgb;
 
   wire [5:0] final_rgb;
+
+  // Transparent color constant
+  localparam [5:0] COLOR_TRANSPARENT = 6'b100001;
 
   // Instantiate VGA Timing Generator
   vga_timing u_vga_timing (
@@ -94,7 +95,6 @@ module tt_um_watpixels (
       .x(x_pos),
       .y(y_pos),
       .active(active),
-      .draw(emblem_draw),
       .rgb(emblem_rgb)
   );
 
@@ -103,14 +103,13 @@ module tt_um_watpixels (
       .x(x_pos),
       .y(y_pos),
       .active(active),
-      .draw(waterloo_draw),
       .rgb(waterloo_rgb)
   );
 
-  // Blend overlays with pattern, overlays take priority when they draw
+  // Blend overlays with pattern, overlays take priority when not transparent
   // Gate pattern output with active (overlays handle active internally)
-  assign final_rgb = waterloo_draw ? waterloo_rgb :
-                     (emblem_draw ? emblem_rgb :
+  assign final_rgb = (waterloo_rgb != COLOR_TRANSPARENT) ? waterloo_rgb :
+                     ((emblem_rgb != COLOR_TRANSPARENT) ? emblem_rgb :
                      (active ? pattern_rgb : 6'b0));
 
   // Output Signal Mapping

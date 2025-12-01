@@ -2,7 +2,6 @@ module emblem_gen(
     input wire [9:0] x,
     input wire [9:0] y,
     input wire active,
-    output reg draw,
     output reg [5:0] rgb
 );
 
@@ -11,6 +10,7 @@ module emblem_gen(
     localparam [9:0] EMBLEM_Y0 = 144;
     localparam [9:0] EMBLEM_CENTER_X = 320;  // (240 + 400) / 2
 
+    localparam [5:0] COLOR_TRANSPARENT = 6'b100001;
     localparam [5:0] COLOR_BLACK = 6'b000000;
     localparam [5:0] COLOR_GOLD = 6'b110110;
     localparam [5:0] COLOR_RED = 6'b100100;
@@ -253,8 +253,6 @@ module emblem_gen(
         end
     endfunction
 
-    reg draw_flag;
-
     always @(*) begin
         reg [6:0] half_width;
         reg [6:0] inner_half;
@@ -265,15 +263,13 @@ module emblem_gen(
         half_width = 0;
         inner_half = 0;
         shield_border = 0;
-        draw_flag = 0;
-        rgb = 6'b000000;
+        rgb = COLOR_TRANSPARENT;
         abs_dx = (x >= EMBLEM_CENTER_X) ? (x - EMBLEM_CENTER_X) : (EMBLEM_CENTER_X - x);
         rel_y = y - EMBLEM_Y0;
 
         if (active && (y >= EMBLEM_Y0) && (y < 320)) begin  // Shield bottom at y=320
             half_width = shield_width(rel_y[7:0]);
             if (abs_dx <= {3'b0, half_width}) begin
-                draw_flag = 1;
                 rgb = COLOR_GOLD;
 
                 inner_half = (half_width > BORDER_THICKNESS[6:0]) ? (half_width - BORDER_THICKNESS[6:0]) : 7'b0;
@@ -284,7 +280,6 @@ module emblem_gen(
                 if (shield_border) rgb = COLOR_BLACK;
             end
         end
-        draw = draw_flag;
     end
 
 endmodule

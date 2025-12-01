@@ -2,13 +2,15 @@ module waterloo_text_gen(
     input wire [9:0] x,
     input wire [9:0] y,
     input wire active,
-    output reg draw,
-    output reg [5:0] rgb
+    output wire [5:0] rgb
 );
+    localparam [5:0] COLOR_TRANSPARENT = 6'b100001;
+    localparam [5:0] COLOR_GOLD = 6'b110110;
+
     localparam [9:0] TEXT_Y0 = 325;
     localparam [9:0] CHAR_WIDTH = 10;  // Character width in pixels (scaled by 2)
-    localparam [9:0] TOTAL_TEXT_WIDTH = 132;  // 12 chars * 10px + 11 spaces * 2px
-    localparam [9:0] TEXT_X0 = 320 - (TOTAL_TEXT_WIDTH >> 1);  // Centered at x=320
+    localparam [9:0] TOTAL_TEXT_WIDTH = 142;  // 12 chars * 10px + 11 spaces * 2px
+    localparam [9:0] TEXT_X0 = 249;  // Left edge of text
 
     // Direct position-to-bitmap lookup
     // This compresses the transistors required by taking advantage of default values
@@ -95,7 +97,7 @@ module waterloo_text_gen(
         else if (rel_x < 12*9)  begin char_pos = 4'd8;  char_x_offset = rel_x - 12*8;  end
         else if (rel_x < 12*10) begin char_pos = 4'd9;  char_x_offset = rel_x - 12*9;  end
         else if (rel_x < 12*11) begin char_pos = 4'd10; char_x_offset = rel_x - 12*10; end
-        else                    begin char_pos = 4'd11; char_x_offset = rel_x - 12*11; end
+        else /*(rel_x < 12*12)*/begin char_pos = 4'd11; char_x_offset = rel_x - 12*11; end
     end
 
     // Rational: We only need the bottom 4 bits of y - TEXT_Y0, so we can safely ignore the warning
@@ -108,8 +110,8 @@ module waterloo_text_gen(
     wire [2:0] pixel_y = char_y_offset[3:1];
 
     wire [4:0] char_row_data = get_char_bmp(char_pos, pixel_y);
+    wire is_text_pixel = active && (y >= TEXT_Y0) && (y < TEXT_Y0 + 14) && (rel_x < TOTAL_TEXT_WIDTH) && (char_x_offset < CHAR_WIDTH) && char_row_data[4 - pixel_x];
 
-    assign rgb = 6'b110110;
-    assign draw = active && (y >= TEXT_Y0) && (y < TEXT_Y0 + 14) && (rel_x < TOTAL_TEXT_WIDTH) && (char_x_offset < CHAR_WIDTH) && char_row_data[4 - pixel_x];
+    assign rgb = is_text_pixel ? COLOR_GOLD : COLOR_TRANSPARENT;
 
 endmodule
