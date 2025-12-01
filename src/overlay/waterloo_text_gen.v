@@ -14,6 +14,7 @@ module waterloo_text_gen(
 
     // Direct position-to-bitmap lookup
     // This compresses the transistors required by taking advantage of default values
+    // For example: T originally had repeated 5'b00100, instead of writing this multiple times, we take advantage of the fact that we can use the default value of 5'b00100
     function automatic [4:0] get_char_bmp;
         input [3:0] pos;
         input [2:0] row;
@@ -86,18 +87,18 @@ module waterloo_text_gen(
     /* verilator lint_on UNUSEDSIGNAL */
 
     always @(*) begin
-        if      (rel_x < 12*1)  begin char_pos = 4'd0;  char_x_offset = rel_x - 12*0;  end
-        else if (rel_x < 12*2)  begin char_pos = 4'd1;  char_x_offset = rel_x - 12*1;  end
-        else if (rel_x < 12*3)  begin char_pos = 4'd2;  char_x_offset = rel_x - 12*2;  end
-        else if (rel_x < 12*4)  begin char_pos = 4'd3;  char_x_offset = rel_x - 12*3;  end
-        else if (rel_x < 12*5)  begin char_pos = 4'd4;  char_x_offset = rel_x - 12*4;  end
-        else if (rel_x < 12*6)  begin char_pos = 4'd5;  char_x_offset = rel_x - 12*5;  end
-        else if (rel_x < 12*7)  begin char_pos = 4'd6;  char_x_offset = rel_x - 12*6;  end
-        else if (rel_x < 12*8)  begin char_pos = 4'd7;  char_x_offset = rel_x - 12*7;  end
-        else if (rel_x < 12*9)  begin char_pos = 4'd8;  char_x_offset = rel_x - 12*8;  end
-        else if (rel_x < 12*10) begin char_pos = 4'd9;  char_x_offset = rel_x - 12*9;  end
-        else if (rel_x < 12*11) begin char_pos = 4'd10; char_x_offset = rel_x - 12*10; end
-        else /*(rel_x < 12*12)*/begin char_pos = 4'd11; char_x_offset = rel_x - 12*11; end
+        if      (rel_x < 12*1)  begin char_pos = 0;  char_x_offset = rel_x - 12*0;  end
+        else if (rel_x < 12*2)  begin char_pos = 1;  char_x_offset = rel_x - 12*1;  end
+        else if (rel_x < 12*3)  begin char_pos = 2;  char_x_offset = rel_x - 12*2;  end
+        else if (rel_x < 12*4)  begin char_pos = 3;  char_x_offset = rel_x - 12*3;  end
+        else if (rel_x < 12*5)  begin char_pos = 4;  char_x_offset = rel_x - 12*4;  end
+        else if (rel_x < 12*6)  begin char_pos = 5;  char_x_offset = rel_x - 12*5;  end
+        else if (rel_x < 12*7)  begin char_pos = 6;  char_x_offset = rel_x - 12*6;  end
+        else if (rel_x < 12*8)  begin char_pos = 7;  char_x_offset = rel_x - 12*7;  end
+        else if (rel_x < 12*9)  begin char_pos = 8;  char_x_offset = rel_x - 12*8;  end
+        else if (rel_x < 12*10) begin char_pos = 9;  char_x_offset = rel_x - 12*9;  end
+        else if (rel_x < 12*11) begin char_pos = 10; char_x_offset = rel_x - 12*10; end
+        else /*(rel_x < 12*12)*/begin char_pos = 11; char_x_offset = rel_x - 12*11; end
     end
 
     // Rational: We only need the bottom 4 bits of y - TEXT_Y0, so we can safely ignore the warning

@@ -24,11 +24,11 @@ module tt_um_watpixels (
 
   // Convert speed inputs to a single speed value (priority encoder)
   wire [2:0] speed;
-  assign speed = ui_in[7] ? 3'd6 :
-                 ui_in[6] ? 3'd5 :
-                 ui_in[5] ? 3'd4 :
-                 ui_in[4] ? 3'd3 :
-                 ui_in[3] ? 3'd2 : 3'd1;
+  assign speed = ui_in[7] ? 6 :
+                 ui_in[6] ? 5 :
+                 ui_in[5] ? 4 :
+                 ui_in[4] ? 3 :
+                 ui_in[3] ? 2 : 1;
 
   // VGA Timing Signals
   wire hsync;
@@ -53,7 +53,7 @@ module tt_um_watpixels (
 
   wire [5:0] final_rgb;
 
-  // Transparent color constant
+  // Transparent color constant (technically this is a real colour, but since we never use it, we can treat it as transparent)
   localparam [5:0] COLOR_TRANSPARENT = 6'b100001;
 
   // Instantiate VGA Timing Generator
@@ -110,7 +110,7 @@ module tt_um_watpixels (
   // Gate pattern output with active (overlays handle active internally)
   assign final_rgb = (waterloo_rgb != COLOR_TRANSPARENT) ? waterloo_rgb :
                      ((emblem_rgb != COLOR_TRANSPARENT) ? emblem_rgb :
-                     (active ? pattern_rgb : 6'b0));
+                     (active ? pattern_rgb : 6'b000000));
 
   // Output Signal Mapping
   assign uo_out[0] = hsync;
