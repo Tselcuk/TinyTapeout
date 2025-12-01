@@ -12,22 +12,22 @@ module emblem_gen(
     localparam [5:0] COLOR_WHITE = 6'b111111;
 
     // Chevron parameters (original bitmap: 85x100, scaled 2x for display)
-    localparam [9:0] CHEVRON_WIDTH = 170;
-    localparam [9:0] CHEVRON_HEIGHT = 200;
-    localparam [9:0] CHEVRON_X = 235;
-    localparam [9:0] CHEVRON_Y = 144;
-    localparam [6:0] CHEVRON_BITMAP_MIN_ROW = 7'd37;
-    localparam [6:0] CHEVRON_BITMAP_MAX_ROW = 7'd76;
+    localparam [9:0] CHEV_WIDTH = 170;
+    localparam [9:0] CHEV_HEIGHT = 200;
+    localparam [9:0] CHEV_X = 235;
+    localparam [9:0] CHEV_Y = 144;
+    localparam [6:0] CHEV_MIN_ROW = 7'd37;
+    localparam [6:0] CHEV_MAX_ROW = 7'd76;
 
-    localparam [9:0] LION_WIDTH = 48;
-    localparam [9:0] LION_HEIGHT = 45;
-    localparam [9:0] TOP_LION_Y = 160;     // 144 + 16
-    localparam [9:0] BOTTOM_LION_Y = 264;  // 144 + 120
-    localparam [9:0] LEFT_LION_X = 260;    // 320 - 80 + 20
-    localparam [9:0] RIGHT_LION_X = 332;   // 320 + 80 - 20 - 48
-    localparam [9:0] CENTER_LION_X = 296;  // 320 - 24
+    localparam [9:0] LION_W = 48;
+    localparam [9:0] LION_H = 45;
+    localparam [9:0] TOP_LION_Y = 160; // 144 + 16
+    localparam [9:0] BOT_LION_Y = 264; // 144 + 120
+    localparam [9:0] LEFT_LION_X = 260; // 320 - 80 + 20
+    localparam [9:0] RIGHT_LION_X = 332; // 320 + 80 - 20 - 48
+    localparam [9:0] CENTER_LION_X = 296; // 320 - 24
 
-    function automatic [LION_WIDTH-1:0] lion_row;
+    function automatic [47:0] lion_row;
         input [5:0] idx;
         begin
             case (idx)
@@ -44,8 +44,7 @@ module emblem_gen(
                 6'd10: lion_row = 48'h01F7FFF01FF0;
                 6'd11: lion_row = 48'h30F1FFCCBFF8;
                 6'd12: lion_row = 48'h3071FFFFFF90;
-                6'd13: lion_row = 48'h3F33FFFFFF80; // Same as 14
-                6'd14: lion_row = 48'h3F33FFFFFF80; // Same as 13
+                6'd13, 6'd14: lion_row = 48'h3F33FFFFFF80; // Reused for rows 13 and 14
                 6'd15: lion_row = 48'h1FE07FFFFF00;
                 6'd16: lion_row = 48'h0FE07FFFFD00;
                 6'd17: lion_row = 48'h03C0FFFFF800;
@@ -64,9 +63,7 @@ module emblem_gen(
                 6'd30: lion_row = 48'h071FFFFE0000;
                 6'd31: lion_row = 48'h03FFFFFE0000;
                 6'd32: lion_row = 48'h003FFFFF0000;
-                6'd33: lion_row = 48'h0007FEFF0000; // Same as 34, 35, 36
-                6'd34: lion_row = 48'h0007FEFF0000; // Same as 34, 35, 36
-                6'd35: lion_row = 48'h0007FEFF0000; // Same as 34, 35, 36
+                6'd33, 6'd34, 6'd35: lion_row = 48'h0007FEFF0000; // Reused for rows 33, 34, and 35
                 6'd36: lion_row = 48'h007FFE7F0000;
                 6'd37: lion_row = 48'h00FFFC7F8C00;
                 6'd38: lion_row = 48'h01FFE07FDE00;
@@ -93,25 +90,25 @@ module emblem_gen(
         /* verilator lint_off WIDTH */
 
         // Check top lions (same Y range, two possible X ranges)
-        if (y >= TOP_LION_Y && y < (TOP_LION_Y + LION_HEIGHT)) begin
+        if (y >= TOP_LION_Y && y < (TOP_LION_Y + LION_H)) begin
             lion_row_offset = y - TOP_LION_Y;
-            if (x >= LEFT_LION_X && x < (LEFT_LION_X + LION_WIDTH)) begin
+            if (x >= LEFT_LION_X && x < (LEFT_LION_X + LION_W)) begin
                 lion_col_offset = x - LEFT_LION_X;
                 lion_box_hit = 1;
-            end else if (x >= RIGHT_LION_X && x < (RIGHT_LION_X + LION_WIDTH)) begin
+            end else if (x >= RIGHT_LION_X && x < (RIGHT_LION_X + LION_W)) begin
                 lion_col_offset = x - RIGHT_LION_X;
                 lion_box_hit = 1;
             end
         // Check bottom lion (one X range, one Y range)
-        end else if (y >= BOTTOM_LION_Y && y < (BOTTOM_LION_Y + LION_HEIGHT) && x >= CENTER_LION_X && x < (CENTER_LION_X + LION_WIDTH)) begin
+        end else if (y >= BOT_LION_Y && y < (BOT_LION_Y + LION_H) && x >= CENTER_LION_X && x < (CENTER_LION_X + LION_W)) begin
             lion_col_offset = x - CENTER_LION_X;
-            lion_row_offset = y - BOTTOM_LION_Y;
+            lion_row_offset = y - BOT_LION_Y;
             lion_box_hit = 1;
         end
         /* verilator lint_on WIDTH */
     end
 
-    wire [LION_WIDTH-1:0] lion_row_data = lion_row(lion_row_offset);
+    wire [47:0] lion_row_data = lion_row(lion_row_offset);
     wire is_lion_pixel = lion_box_hit && lion_row_data[lion_col_offset];
 
     function automatic [95:0] chevron_row;
@@ -164,16 +161,16 @@ module emblem_gen(
     endfunction
 
     /* verilator lint_off WIDTH */
-    wire [6:0] chevron_scaled_col = (x - CHEVRON_X) >> 1;
-    wire [6:0] chevron_scaled_row = (y - CHEVRON_Y) >> 1;
+    wire [6:0] chevron_scaled_col = (x - CHEV_X) >> 1;
+    wire [6:0] chevron_scaled_row = (y - CHEV_Y) >> 1;
     /* verilator lint_on WIDTH */
 
     /* verilator lint_off WIDTHTRUNC */
-    wire [95:0] chevron_row_data = chevron_row(chevron_scaled_row - CHEVRON_BITMAP_MIN_ROW);
-    wire is_chevron_pixel = (y >= CHEVRON_Y && y < (CHEVRON_Y + CHEVRON_HEIGHT) &&
-                             x >= CHEVRON_X && x < (CHEVRON_X + CHEVRON_WIDTH) &&
-                             chevron_scaled_row >= CHEVRON_BITMAP_MIN_ROW &&
-                             chevron_scaled_row <= CHEVRON_BITMAP_MAX_ROW &&
+    wire [95:0] chevron_row_data = chevron_row(chevron_scaled_row - CHEV_MIN_ROW);
+    wire is_chevron_pixel = (y >= CHEV_Y && y < (CHEV_Y + CHEV_HEIGHT) &&
+                             x >= CHEV_X && x < (CHEV_X + CHEV_WIDTH) &&
+                             chevron_scaled_row >= CHEV_MIN_ROW &&
+                             chevron_scaled_row <= CHEV_MAX_ROW &&
                              chevron_row_data[95 - chevron_scaled_col]);
     /* verilator lint_on WIDTHTRUNC */
 
