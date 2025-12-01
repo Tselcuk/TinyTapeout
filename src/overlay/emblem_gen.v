@@ -111,7 +111,8 @@ module emblem_gen(
         /* verilator lint_on WIDTH */
     end
 
-    wire is_lion_pixel = lion_box_hit && lion_row(lion_row_offset)[lion_col_offset];
+    wire [LION_WIDTH-1:0] lion_row_data = lion_row(lion_row_offset);
+    wire is_lion_pixel = lion_box_hit && lion_row_data[lion_col_offset];
 
     function automatic [95:0] chevron_row;
         input [5:0] idx;
@@ -168,11 +169,12 @@ module emblem_gen(
     /* verilator lint_on WIDTH */
 
     /* verilator lint_off WIDTHTRUNC */
+    wire [95:0] chevron_row_data = chevron_row(chevron_scaled_row - CHEVRON_BITMAP_MIN_ROW);
     wire is_chevron_pixel = (y >= CHEVRON_Y && y < (CHEVRON_Y + CHEVRON_HEIGHT) &&
                              x >= CHEVRON_X && x < (CHEVRON_X + CHEVRON_WIDTH) &&
                              chevron_scaled_row >= CHEVRON_BITMAP_MIN_ROW &&
                              chevron_scaled_row <= CHEVRON_BITMAP_MAX_ROW &&
-                             chevron_row(chevron_scaled_row - CHEVRON_BITMAP_MIN_ROW)[95 - chevron_scaled_col]);
+                             chevron_row_data[95 - chevron_scaled_col]);
     /* verilator lint_on WIDTHTRUNC */
 
     function automatic [6:0] shield_width;
