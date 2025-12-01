@@ -8,44 +8,28 @@ module radient_gradient (
     output reg [5:0] rgb
 );
     reg [9:0] frame_counter;
-    reg [1:0] subframe_accum;
-
-    wire [2:0] frac_sum = {1'b0, subframe_accum} + step_size[1:0];
 
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            frame_counter <= 0;
-            subframe_accum <= 0;
-        end else if (next_frame) begin
-            frame_counter <= frame_counter + {9'b0, step_size[2]} + {9'b0, frac_sum[2]};
-            subframe_accum <= frac_sum[1:0];
-        end
+        if (rst) frame_counter <= 0;
+        else if (next_frame) frame_counter <= frame_counter + {7'b0, step_size};
     end
 
-    // Center coordinates for 640x480 VGA screen
-    // sx and sy are the signed distances from the center of the screen
-    wire signed [10:0] sx = $signed({1'b0, x}) - $signed({1'b0, 10'd320}); // CENTER_X = 320
-    wire signed [10:0] sy = $signed({1'b0, y}) - $signed({1'b0, 10'd240}); // CENTER_Y = 240
+    wire [9:0] dx = (x < 320) ? (320 - x) : (x - 320);
+    wire [9:0] dy = (y < 240) ? (240 - y) : (y - 240);
+    wire [9:0] manhattan_distance = dx + dy;
 
-    wire [9:0] manhattan_distance = (sx[10] ? (~sx[9:0] + 1) : sx[9:0]) + (sy[10] ? (~sy[9:0] + 1) : sy[9:0]);
-
-    wire [9:0] base_radius = 10'd30 + {1'b0, frame_counter[8:0]}; // Expands the pattern outwards
-
-    // Concentric ring radii (inner to outer)
-    wire [9:0] ring1_radius = (base_radius > 24) ? (base_radius - 24) : 0;
-    wire [9:0] ring2_radius = base_radius + 24;
-    wire [9:0] ring3_radius = base_radius + 48;
-    wire [9:0] ring4_radius = base_radius + 72;
-    wire [9:0] ring5_radius = base_radius + 96;
+    // This expands the pattern outwards
+    // Slow down the expansion by 8x since we divide by 8
+    wire [9:0] base_radius = 10'd30 + {2'b0, frame_counter[9:3]};
 
     always @(*) begin
         rgb = 6'b000001; // NAVY_EDGE
 
-        if (manhattan_distance <= ring1_radius) rgb = 6'b101101; // MAGENTA_CORE
-        else if (manhattan_distance <= ring2_radius) rgb = 6'b101100; // MAGENTA_GLOW
-        else if (manhattan_distance <= ring3_radius) rgb = 6'b101000; // MAGENTA_INNER_RING
-        else if (manhattan_distance <= ring4_radius) rgb = 6'b001100; // MAGENTA_OUTER_RING
-        else if (manhattan_distance <= ring5_radius) rgb = 6'b001000; // BLUE_HALO
+        if      (manhattan_distance <= base_radius + 0*24) rgb = 6'b101101; // MAGENTA_CORE
+        else if (manhattan_distance <= base_radius + 1*24) rgb = 6'b101100; // MAGENTA_GLOW
+        else if (manhattan_distance <= base_radius + 2*24) rgb = 6'b101000; // MAGENTA_INNER_RING
+        else if (manhattan_distance <= base_radius + 3*24) rgb = 6'b001100; // MAGENTA_OUTER_RING
+        else if (manhattan_distance <= base_radius + 4*24) rgb = 6'b001000; // BLUE_HALO
     end
 
 endmodule
