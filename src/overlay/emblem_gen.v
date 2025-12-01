@@ -111,52 +111,69 @@ module emblem_gen(
     wire [47:0] lion_row_data = lion_row(lion_row_offset);
     wire is_lion_pixel = lion_box_hit && lion_row_data[lion_col_offset];
 
-    function automatic [95:0] chevron_row;
+    // Original bitmap data retained for the white chevron.
+    function automatic [95:0] chevron_row_original;
         input [5:0] idx;
         begin
             case (idx)
-                6'd0:  chevron_row = 96'h000000000020000000000000;  // row 37
-                6'd1:  chevron_row = 96'h000000000070000000000000;  // row 38
-                6'd2:  chevron_row = 96'h0000000000F8000000000000;  // row 39
-                6'd3:  chevron_row = 96'h0000000001FC000000000000;  // row 40
-                6'd4:  chevron_row = 96'h0000000003FE000000000000;  // row 41
-                6'd5:  chevron_row = 96'h0000000007FF000000000000;  // row 42
-                6'd6:  chevron_row = 96'h000000000FFF800000000000;  // row 43
-                6'd7:  chevron_row = 96'h000000001FFFC00000000000;  // row 44
-                6'd8:  chevron_row = 96'h000000003FFFE00000000000;  // row 45
-                6'd9:  chevron_row = 96'h000000007FFFF00000000000;  // row 46
-                6'd10: chevron_row = 96'h00000000FFDFF80000000000;  // row 47
-                6'd11: chevron_row = 96'h00000001FF8FFC0000000000;  // row 48
-                6'd12: chevron_row = 96'h00000003FF07FE0000000000;  // row 49
-                6'd13: chevron_row = 96'h00000007FE03FF0000000000;  // row 50
-                6'd14: chevron_row = 96'h0000000FFC01FF8000000000;  // row 51
-                6'd15: chevron_row = 96'h0000001FF800FFC000000000;  // row 52
-                6'd16: chevron_row = 96'h0000003FF0007FE000000000;  // row 53
-                6'd17: chevron_row = 96'h0000007FE0003FF000000000;  // row 54
-                6'd18: chevron_row = 96'h000000FFC0001FF800000000;  // row 55
-                6'd19: chevron_row = 96'h000001FF80000FFC00000000;  // row 56
-                6'd20: chevron_row = 96'h000003FF000007FE00000000;  // row 57
-                6'd21: chevron_row = 96'h000007FE000003FF00000000;  // row 58
-                6'd22: chevron_row = 96'h00000FFC000001FF80000000;  // row 59
-                6'd23: chevron_row = 96'h00001FF8000000FFC0000000;  // row 60
-                6'd24: chevron_row = 96'h00003FF00000007FE0000000;  // row 61
-                6'd25: chevron_row = 96'h00007FE00000003FF0000000;  // row 62
-                6'd26: chevron_row = 96'h0000FFC00000001FF8000000;  // row 63
-                6'd27: chevron_row = 96'h0001FF800000000FFC000000;  // row 64
-                6'd28: chevron_row = 96'h0003FF0000000007FE000000;  // row 65
-                6'd29: chevron_row = 96'h0007FE0000000003FF000000;  // row 66
-                6'd30: chevron_row = 96'h000FFC0000000001FF800000;  // row 67
-                6'd31: chevron_row = 96'h001FF80000000000FFC00000;  // row 68
-                6'd32: chevron_row = 96'h003FF000000000007FE00000;  // row 69
-                6'd33: chevron_row = 96'h001FE000000000003FC00000;  // row 70
-                6'd34: chevron_row = 96'h000FC000000000001F800000;  // row 71
-                6'd35: chevron_row = 96'h000F8000000000000F800000;  // row 72
-                6'd36: chevron_row = 96'h000F00000000000007800000;  // row 73
-                6'd37: chevron_row = 96'h000E00000000000003800000;  // row 74
-                6'd38: chevron_row = 96'h000C00000000000001800000;  // row 75
-                6'd39: chevron_row = 96'h000800000000000000800000;  // row 76
-                default: chevron_row = 96'h000000000000000000000000;
+                6'd0:  chevron_row_original = 96'h000000000020000000000000;  // row 37
+                6'd1:  chevron_row_original = 96'h000000000070000000000000;  // row 38
+                6'd2:  chevron_row_original = 96'h0000000000F8000000000000;  // row 39
+                6'd3:  chevron_row_original = 96'h0000000001FC000000000000;  // row 40
+                6'd4:  chevron_row_original = 96'h0000000003FE000000000000;  // row 41
+                6'd5:  chevron_row_original = 96'h0000000007FF000000000000;  // row 42
+                6'd6:  chevron_row_original = 96'h000000000FFF800000000000;  // row 43
+                6'd7:  chevron_row_original = 96'h000000001FFFC00000000000;  // row 44
+                6'd8:  chevron_row_original = 96'h000000003FFFE00000000000;  // row 45
+                6'd9:  chevron_row_original = 96'h000000007FFFF00000000000;  // row 46
+                6'd10: chevron_row_original = 96'h00000000FFDFF80000000000;  // row 47
+                6'd11: chevron_row_original = 96'h00000001FF8FFC0000000000;  // row 48
+                6'd12: chevron_row_original = 96'h00000003FF07FE0000000000;  // row 49
+                6'd13: chevron_row_original = 96'h00000007FE03FF0000000000;  // row 50
+                6'd14: chevron_row_original = 96'h0000000FFC01FF8000000000;  // row 51
+                6'd15: chevron_row_original = 96'h0000001FF800FFC000000000;  // row 52
+                6'd16: chevron_row_original = 96'h0000003FF0007FE000000000;  // row 53
+                6'd17: chevron_row_original = 96'h0000007FE0003FF000000000;  // row 54
+                6'd18: chevron_row_original = 96'h000000FFC0001FF800000000;  // row 55
+                6'd19: chevron_row_original = 96'h000001FF80000FFC00000000;  // row 56
+                6'd20: chevron_row_original = 96'h000003FF000007FE00000000;  // row 57
+                6'd21: chevron_row_original = 96'h000007FE000003FF00000000;  // row 58
+                6'd22: chevron_row_original = 96'h00000FFC000001FF80000000;  // row 59
+                6'd23: chevron_row_original = 96'h00001FF8000000FFC0000000;  // row 60
+                6'd24: chevron_row_original = 96'h00003FF00000007FE0000000;  // row 61
+                6'd25: chevron_row_original = 96'h00007FE00000003FF0000000;  // row 62
+                6'd26: chevron_row_original = 96'h0000FFC00000001FF8000000;  // row 63
+                6'd27: chevron_row_original = 96'h0001FF800000000FFC000000;  // row 64
+                6'd28: chevron_row_original = 96'h0003FF0000000007FE000000;  // row 65
+                6'd29: chevron_row_original = 96'h0007FE0000000003FF000000;  // row 66
+                6'd30: chevron_row_original = 96'h000FFC0000000001FF800000;  // row 67
+                6'd31: chevron_row_original = 96'h001FF80000000000FFC00000;  // row 68
+                6'd32: chevron_row_original = 96'h003FF000000000007FE00000;  // row 69
+                6'd33: chevron_row_original = 96'h001FE000000000003FC00000;  // row 70
+                6'd34: chevron_row_original = 96'h000FC000000000001F800000;  // row 71
+                6'd35: chevron_row_original = 96'h000F8000000000000F800000;  // row 72
+                6'd36: chevron_row_original = 96'h000F00000000000007800000;  // row 73
+                6'd37: chevron_row_original = 96'h000E00000000000003800000;  // row 74
+                6'd38: chevron_row_original = 96'h000C00000000000001800000;  // row 75
+                6'd39: chevron_row_original = 96'h000800000000000000800000;  // row 76
+                default: chevron_row_original = 96'h000000000000000000000000;
             endcase
+        end
+    endfunction
+
+    function automatic [95:0] chevron_row_black;
+        input [5:0] idx;
+        reg [95:0] raw_row;
+        reg [95:0] neighbor_left;
+        reg [95:0] neighbor_right;
+        begin
+            raw_row = chevron_row_original(idx);
+
+            neighbor_left = {1'b0, raw_row[95:1]};
+            neighbor_right = {raw_row[94:0], 1'b0};
+
+            // Flip original ones to zeros, but elevate zeros that were adjacent to ones.
+            chevron_row_black = (~raw_row) & (neighbor_left | neighbor_right);
         end
     endfunction
 
@@ -166,12 +183,14 @@ module emblem_gen(
     /* verilator lint_on WIDTH */
 
     /* verilator lint_off WIDTHTRUNC */
-    wire [95:0] chevron_row_data = chevron_row(chevron_scaled_row - CHEV_MIN_ROW);
-    wire is_chevron_pixel = (y >= CHEV_Y && y < (CHEV_Y + CHEV_HEIGHT) &&
-                             x >= CHEV_X && x < (CHEV_X + CHEV_WIDTH) &&
-                             chevron_scaled_row >= CHEV_MIN_ROW &&
-                             chevron_scaled_row <= CHEV_MAX_ROW &&
-                             chevron_row_data[95 - chevron_scaled_col]);
+    wire chevron_window = (y >= CHEV_Y && y < (CHEV_Y + CHEV_HEIGHT) &&
+                           x >= CHEV_X && x < (CHEV_X + CHEV_WIDTH) &&
+                           chevron_scaled_row >= CHEV_MIN_ROW &&
+                           chevron_scaled_row <= CHEV_MAX_ROW);
+    wire [95:0] chevron_row_white_data = chevron_row_original(chevron_scaled_row - CHEV_MIN_ROW);
+    wire [95:0] chevron_row_black_data = chevron_row_black(chevron_scaled_row - CHEV_MIN_ROW);
+    wire is_chevron_white_pixel = chevron_window && chevron_row_white_data[95 - chevron_scaled_col];
+    wire is_chevron_black_pixel = chevron_window && chevron_row_black_data[95 - chevron_scaled_col];
     /* verilator lint_on WIDTHTRUNC */
 
     function automatic [6:0] shield_width;
@@ -220,7 +239,8 @@ module emblem_gen(
 
         if (active && y >= 144 && y < 320 && abs_dx <= {3'b0, half_width}) begin
             rgb = COLOR_GOLD;
-            if (is_chevron_pixel) rgb = COLOR_WHITE;
+            if (is_chevron_white_pixel) rgb = COLOR_WHITE;
+            if (is_chevron_black_pixel) rgb = COLOR_BLACK;
             if (is_lion_pixel) rgb = COLOR_RED;
             // Border is either outer 3 pixels or top 3 rows
             if (abs_dx > {3'b0, border_inner} || rel_y < 3) rgb = COLOR_BLACK;
