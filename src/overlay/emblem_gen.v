@@ -31,7 +31,7 @@ module emblem_gen(
     localparam [9:0] LION_WIDTH = 48;
     localparam [9:0] LION_HEIGHT = 45;
     localparam [9:0] TOP_LION_Y = EMBLEM_Y0 + 16;
-    localparam [9:0] BOTTOM_LION_Y = EMBLEM_Y0 + 112;
+    localparam [9:0] BOTTOM_LION_Y = EMBLEM_Y0 + 120;
     localparam [9:0] LEFT_LION_X = EMBLEM_X0 + 20;
     localparam [9:0] RIGHT_LION_X = EMBLEM_X1 - 20 - LION_WIDTH;
     localparam [9:0] CENTER_LION_X = EMBLEM_CENTER_X - (LION_WIDTH >> 1);
