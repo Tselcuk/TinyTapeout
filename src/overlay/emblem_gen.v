@@ -15,7 +15,7 @@ module emblem_gen(
     localparam [9:0] CHEV_WIDTH = 170;
     localparam [9:0] CHEV_HEIGHT = 200;
     localparam [9:0] CHEV_X = 235;
-    localparam [9:0] CHEV_Y = 144;
+    localparam [9:0] CHEV_Y = 134;
     localparam [6:0] CHEV_MIN_ROW = 7'd37;
     localparam [6:0] CHEV_MAX_ROW = 7'd76;
 
