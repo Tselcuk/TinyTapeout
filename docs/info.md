@@ -3,7 +3,7 @@
 WATpixels generates a VGA display output at 640×480 resolution with 60Hz refresh rate. The design features three animated patterns that automatically cycle:
 - **Checkerboard** (4 seconds): Animated checkerboard pattern
 - **Gradient** (8 seconds): Radial gradient pattern
-- **Spiral** (6 seconds): Animated spiral pattern
+- **Radial Arm** (6 seconds): Animated radial arm pattern
 
 Two overlays are rendered on top of the patterns:
 - Waterloo Engineering emblem

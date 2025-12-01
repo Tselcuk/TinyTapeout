@@ -11,20 +11,20 @@ module pattern_selector (
 );
     localparam [1:0] PATTERN_CHECKERBOARD = 0;
     localparam [1:0] PATTERN_RADIENT = 1;
-    localparam [1:0] PATTERN_SPIRAL = 2;
+    localparam [1:0] PATTERN_RADIAL_ARM = 2;
 
     reg [1:0] pattern_select;
     reg [9:0] frame_counter;
 
     wire [5:0] checkboard_rgb;
     wire [5:0] radient_rgb;
-    wire [5:0] spiral_rgb;
+    wire [5:0] radial_arm_rgb;
 
     localparam [9:0] FRAMES_PER_PATTERN = 300;
 
     wire checkerboard_next = (pattern_select == PATTERN_CHECKERBOARD) && animation_trigger;
     wire radient_next = (pattern_select == PATTERN_RADIENT) && animation_trigger;
-    wire spiral_next = (pattern_select == PATTERN_SPIRAL) && animation_trigger;
+    wire radial_arm_next = (pattern_select == PATTERN_RADIAL_ARM) && animation_trigger;
 
     // Track VGA frame advances and defer pattern switches to the next frame origin.
     // Count actual VGA frames by detecting vsync rising edge (end of vsync pulse).
@@ -87,20 +87,20 @@ module pattern_selector (
         .rgb(radient_rgb)
     );
 
-    spiral_gen u_spiral_gen(
+    radial_arm_gen u_radial_arm_gen(
         .clk(clk),
         .rst(pattern_rst),
         .x(x),
         .y(y),
-        .next_frame(spiral_next),
+        .next_frame(radial_arm_next),
         .step_size(step_size),
-        .rgb(spiral_rgb)
+        .rgb(radial_arm_rgb)
     );
 
     always @(*) begin
         if (pattern_select == PATTERN_CHECKERBOARD) rgb = checkboard_rgb;
         else if (pattern_select == PATTERN_RADIENT) rgb = radient_rgb;
-        else if (pattern_select == PATTERN_SPIRAL) rgb = spiral_rgb;
+        else if (pattern_select == PATTERN_RADIAL_ARM) rgb = radial_arm_rgb;
         else rgb = 6'b000000;
     end
 
