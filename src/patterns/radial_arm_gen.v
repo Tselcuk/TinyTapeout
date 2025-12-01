@@ -36,10 +36,10 @@ module radial_arm_gen (
     /* verilator lint_on UNUSEDSIGNAL */
 
     wire [5:0] arm_color =
-        (radial_phase[5:4] == 0) ? 6'b010001 :  // Arm 0: Green
-        (radial_phase[5:4] == 1) ? 6'b100011 :  // Arm 1: Red-purple
-        (radial_phase[5:4] == 2) ? 6'b111010 :  // Arm 2: Light green
-        6'b001110;                              // Arm 3: Blue
+        (radial_phase[5:4] == 0) ? 6'b010001 :  // Green
+        (radial_phase[5:4] == 1) ? 6'b100011 :  // Red-purple
+        (radial_phase[5:4] == 2) ? 6'b111010 :  // Light green
+        6'b001110;                              // Blue
 
     assign rgb = (!radial_phase[6] && !radial_phase[3]) ? arm_color : 6'b000000;
 
