@@ -108,7 +108,7 @@ module emblem_gen(
     wire is_lion_pixel = lion_box_hit && lion_row_data[lion_col_offset];
 
     // Original bitmap data retained for the white chevron.
-    function automatic [95:0] chevron_row_original;
+    function automatic [95:0] chevron_row;
         input [5:0] idx;
         begin
             case (idx)
@@ -163,7 +163,7 @@ module emblem_gen(
         reg [95:0] neighbor_left;
         reg [95:0] neighbor_right;
         begin
-            raw_row = chevron_row_original(idx);
+            raw_row = chevron_row(idx);
 
             neighbor_left = {1'b0, raw_row[95:1]};
             neighbor_right = {raw_row[94:0], 1'b0};
@@ -179,12 +179,9 @@ module emblem_gen(
     /* verilator lint_on WIDTH */
 
     /* verilator lint_off WIDTHTRUNC */
-    wire chevron_window = (y >= CHEV_Y && y < (CHEV_Y + CHEV_HEIGHT) &&
-                           x >= CHEV_X && x < (CHEV_X + CHEV_WIDTH) &&
-                           chevron_scaled_row >= CHEV_MIN_ROW &&
-                           chevron_scaled_row <= CHEV_MAX_ROW);
-    wire [95:0] chevron_row_white_data = chevron_row_original(chevron_scaled_row - CHEV_MIN_ROW);
-    wire [95:0] chevron_row_black_data = chevron_row_black(chevron_scaled_row - CHEV_MIN_ROW);
+    wire chevron_window = y >= CHEV_Y && y < (CHEV_Y + 80) && x >= CHEV_X && x < (CHEV_X + 170);
+    wire [95:0] chevron_row_white_data = chevron_row(chevron_scaled_row);
+    wire [95:0] chevron_row_black_data = chevron_row_black(chevron_scaled_row);
     wire is_chevron_white_pixel = chevron_window && chevron_row_white_data[95 - chevron_scaled_col];
     wire is_chevron_black_pixel = chevron_window && chevron_row_black_data[95 - chevron_scaled_col];
     /* verilator lint_on WIDTHTRUNC */
