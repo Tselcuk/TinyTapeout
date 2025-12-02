@@ -157,16 +157,6 @@ module emblem_gen(
         end
     endfunction
 
-    function automatic [95:0] chevron_row_black;
-        input [5:0] idx;
-        reg [95:0] raw_row;
-        begin
-            raw_row = chevron_row(idx);
-            
-            chevron_row_black = (~raw_row) & ({1'b0, raw_row[95:1]} | {raw_row[94:0], 1'b0});
-        end
-    endfunction
-
     /* verilator lint_off WIDTH */
     wire [6:0] chevron_scaled_col = (x - CHEV_X) >> 1;
     wire [5:0] chevron_scaled_row = (y - CHEV_Y) >> 1;
@@ -175,7 +165,7 @@ module emblem_gen(
     /* verilator lint_off WIDTHTRUNC */
     wire chevron_window = y >= CHEV_Y && y < (CHEV_Y + 80) && x >= CHEV_X && x < (CHEV_X + 170);
     wire [95:0] chevron_row_white_data = chevron_row(chevron_scaled_row);
-    wire [95:0] chevron_row_black_data = chevron_row_black(chevron_scaled_row);
+    wire [95:0] chevron_row_black_data = (~chevron_row_white_data) & ({1'b0, chevron_row_white_data[95:1]} | {chevron_row_white_data[94:0], 1'b0});
     wire is_chevron_white_pixel = chevron_window && chevron_row_white_data[95 - chevron_scaled_col];
     wire is_chevron_black_pixel = chevron_window && chevron_row_black_data[95 - chevron_scaled_col];
     /* verilator lint_on WIDTHTRUNC */
