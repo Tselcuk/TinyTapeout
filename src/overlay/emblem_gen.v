@@ -160,16 +160,10 @@ module emblem_gen(
     function automatic [95:0] chevron_row_black;
         input [5:0] idx;
         reg [95:0] raw_row;
-        reg [95:0] neighbor_left;
-        reg [95:0] neighbor_right;
         begin
             raw_row = chevron_row(idx);
-
-            neighbor_left = {1'b0, raw_row[95:1]};
-            neighbor_right = {raw_row[94:0], 1'b0};
-
-            // Flip original ones to zeros, but elevate zeros that were adjacent to ones.
-            chevron_row_black = (~raw_row) & (neighbor_left | neighbor_right);
+            
+            chevron_row_black = (~raw_row) & ({1'b0, raw_row[95:1]} | {raw_row[94:0], 1'b0});
         end
     endfunction
 
