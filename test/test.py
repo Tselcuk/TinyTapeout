@@ -242,7 +242,8 @@ async def test_color_routing_and_overlays(dut):
     assert read_output_rgb(dut) == 0b100100, "Checkerboard light tile should output green/red mix"
 
     # Emblem overlay should override the pattern with gold even where the pattern is bright.
-    await wait_for_position(dut, 320, 200)
+    # Use (320, 150) which is in the shield but outside chevron/lion/border areas
+    await wait_for_position(dut, 320, 150)
     assert read_output_rgb(dut) == 0b110110, "Emblem region should output gold instead of the underlying pattern"
 
     # Waterloo text overlay draws below the emblem and also maps through the pins.
