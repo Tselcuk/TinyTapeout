@@ -107,7 +107,8 @@ module emblem_gen(
     wire [47:0] lion_row_data = lion_row(lion_row_offset);
     wire is_lion_pixel = lion_box_hit && lion_row_data[lion_col_offset];
 
-    function automatic [95:0] chevron_row;
+    // Original bitmap data retained for the white chevron.
+    function automatic [95:0] chevron_row_original;
         input [5:0] idx;
         begin
             case (idx)
@@ -156,16 +157,36 @@ module emblem_gen(
         end
     endfunction
 
+    function automatic [95:0] chevron_row_black;
+        input [5:0] idx;
+        reg [95:0] raw_row;
+        reg [95:0] neighbor_left;
+        reg [95:0] neighbor_right;
+        begin
+            raw_row = chevron_row_original(idx);
+
+            neighbor_left = {1'b0, raw_row[95:1]};
+            neighbor_right = {raw_row[94:0], 1'b0};
+
+            // Flip original ones to zeros, but elevate zeros that were adjacent to ones.
+            chevron_row_black = (~raw_row) & (neighbor_left | neighbor_right);
+        end
+    endfunction
+
     /* verilator lint_off WIDTH */
     wire [6:0] chevron_scaled_col = (x - CHEV_X) >> 1;
     wire [5:0] chevron_scaled_row = (y - CHEV_Y) >> 1;
     /* verilator lint_on WIDTH */
 
     /* verilator lint_off WIDTHTRUNC */
-    wire [95:0] chevron_row_data = chevron_row(chevron_scaled_row);
-    wire is_chevron_pixel = (y >= CHEV_Y && y < (CHEV_Y + 80) &&
-                             x >= CHEV_X && x < (CHEV_X + 170) &&
-                             chevron_row_data[95 - chevron_scaled_col]);
+    wire chevron_window = (y >= CHEV_Y && y < (CHEV_Y + CHEV_HEIGHT) &&
+                           x >= CHEV_X && x < (CHEV_X + CHEV_WIDTH) &&
+                           chevron_scaled_row >= CHEV_MIN_ROW &&
+                           chevron_scaled_row <= CHEV_MAX_ROW);
+    wire [95:0] chevron_row_white_data = chevron_row_original(chevron_scaled_row - CHEV_MIN_ROW);
+    wire [95:0] chevron_row_black_data = chevron_row_black(chevron_scaled_row - CHEV_MIN_ROW);
+    wire is_chevron_white_pixel = chevron_window && chevron_row_white_data[95 - chevron_scaled_col];
+    wire is_chevron_black_pixel = chevron_window && chevron_row_black_data[95 - chevron_scaled_col];
     /* verilator lint_on WIDTHTRUNC */
 
     function automatic [6:0] shield_width;
@@ -214,7 +235,8 @@ module emblem_gen(
 
         if (active && y >= 144 && y < 320 && abs_dx <= {3'b0, half_width}) begin
             rgb = COLOR_GOLD;
-            if (is_chevron_pixel) rgb = COLOR_WHITE;
+            if (is_chevron_white_pixel) rgb = COLOR_WHITE;
+            if (is_chevron_black_pixel) rgb = COLOR_BLACK;
             if (is_lion_pixel) rgb = COLOR_RED;
             // Border is either outer 3 pixels or top 3 rows
             if (abs_dx > {3'b0, border_inner} || rel_y < 3) rgb = COLOR_BLACK;
