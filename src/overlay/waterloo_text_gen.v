@@ -81,19 +81,24 @@ module waterloo_text_gen(
     reg [3:0] char_pos;
     reg [9:0] char_x_offset;
 
+    wire [9:0] char_pos_x12 = {3'b0, char_pos, 3'b0} + {4'b0, char_pos, 2'b0};  // 12 * char_pos
+
     always @(*) begin
-        if      (rel_x < 12*1)  begin char_pos = 0;  char_x_offset = rel_x - 12*0;  end
-        else if (rel_x < 12*2)  begin char_pos = 1;  char_x_offset = rel_x - 12*1;  end
-        else if (rel_x < 12*3)  begin char_pos = 2;  char_x_offset = rel_x - 12*2;  end
-        else if (rel_x < 12*4)  begin char_pos = 3;  char_x_offset = rel_x - 12*3;  end
-        else if (rel_x < 12*5)  begin char_pos = 4;  char_x_offset = rel_x - 12*4;  end
-        else if (rel_x < 12*6)  begin char_pos = 5;  char_x_offset = rel_x - 12*5;  end
-        else if (rel_x < 12*7)  begin char_pos = 6;  char_x_offset = rel_x - 12*6;  end
-        else if (rel_x < 12*8)  begin char_pos = 7;  char_x_offset = rel_x - 12*7;  end
-        else if (rel_x < 12*9)  begin char_pos = 8;  char_x_offset = rel_x - 12*8;  end
-        else if (rel_x < 12*10) begin char_pos = 9;  char_x_offset = rel_x - 12*9;  end
-        else if (rel_x < 12*11) begin char_pos = 10; char_x_offset = rel_x - 12*10; end
-        else /*(rel_x < 12*12)*/begin char_pos = 11; char_x_offset = rel_x - 12*11; end
+        if      (rel_x < 12)  char_pos = 0;
+        else if (rel_x < 24)  char_pos = 1;
+        else if (rel_x < 36)  char_pos = 2;
+        else if (rel_x < 48)  char_pos = 3;
+        else if (rel_x < 60)  char_pos = 4;
+        else if (rel_x < 72)  char_pos = 5;
+        else if (rel_x < 84)  char_pos = 6;
+        else if (rel_x < 96)  char_pos = 7;
+        else if (rel_x < 108) char_pos = 8;
+        else if (rel_x < 120) char_pos = 9;
+        else if (rel_x < 132) char_pos = 10;
+        else                  char_pos = 11;
+        
+        // Compute offset once using the pre-computed multiplication
+        char_x_offset = rel_x - char_pos_x12;
     end
 
     // Scale down coordinates by 2 to index into base 5x7 bitmap
