@@ -159,10 +159,12 @@ async def test_pause_resume_freezes_animation(dut):
     await RisingEdge(dut.clk)
     await helper.wait_for_pause_state(1)
 
-    paused_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
+    frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
+    paused_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
     for _ in range(5):
         await RisingEdge(dut.user_project.u_vga_timing.vsync)
-        current_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
+        frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
+        current_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
         assert current_offset == paused_offset, "Offset should stay constant while paused"
 
     # Resume animation
@@ -174,7 +176,8 @@ async def test_pause_resume_freezes_animation(dut):
     resumed_offset = paused_offset
     for _ in range(5):
         await RisingEdge(dut.user_project.u_vga_timing.vsync)
-        resumed_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
+        frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
+        resumed_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
         if resumed_offset != paused_offset:
             break
     assert resumed_offset != paused_offset, "Offset should change after resuming"
@@ -258,12 +261,14 @@ async def test_speed_accuracy(dut):
         for _ in range(3):
             await RisingEdge(dut.user_project.u_vga_timing.vsync)
 
-        initial_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
+        frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
+        initial_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
 
         for _ in range(frames_to_test):
             await RisingEdge(dut.user_project.u_vga_timing.vsync)
 
-        final_offset = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_offset.value)
+        frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
+        final_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
 
         # Handle counter overflow (frame_offset is 6-bit)
         actual_increment = final_offset - initial_offset
