@@ -14,13 +14,13 @@ module pattern_selector (
     localparam [1:0] PATTERN_RADIAL_ARM = 2;
 
     reg [1:0] pattern_select;
-    reg [9:0] frame_counter;
+    reg [8:0] frame_counter;
 
     wire [5:0] checkboard_rgb;
     wire [5:0] radient_rgb;
     wire [5:0] radial_arm_rgb;
 
-    localparam [9:0] FRAMES_PER_PATTERN = 300;
+    localparam [8:0] FRAMES_PER_PATTERN = 300;
 
     wire checkerboard_next = (pattern_select == PATTERN_CHECKERBOARD) && animation_trigger;
     wire radient_next = (pattern_select == PATTERN_RADIENT) && animation_trigger;
@@ -98,10 +98,12 @@ module pattern_selector (
     );
 
     always @(*) begin
-        if (pattern_select == PATTERN_CHECKERBOARD) rgb = checkboard_rgb;
-        else if (pattern_select == PATTERN_RADIENT) rgb = radient_rgb;
-        else if (pattern_select == PATTERN_RADIAL_ARM) rgb = radial_arm_rgb;
-        else rgb = 6'b000000;
+        case (pattern_select)
+            PATTERN_CHECKERBOARD: rgb = checkboard_rgb;
+            PATTERN_RADIENT: rgb = radient_rgb;
+            PATTERN_RADIAL_ARM: rgb = radial_arm_rgb;
+            default: rgb = 6'b000000;
+        endcase
     end
 
 endmodule

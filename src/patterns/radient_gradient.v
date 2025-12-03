@@ -22,14 +22,20 @@ module radient_gradient (
     // Slow down the expansion by 8x since we divide by 8
     wire [9:0] base_radius = {3'b0, frame_counter[9:3]};
 
+    wire [9:0] threshold1 = base_radius + 24;
+    wire [9:0] threshold2 = base_radius + 48;
+    wire [9:0] threshold3 = base_radius + 72;
+    wire [9:0] threshold4 = base_radius + 96;
+    wire [9:0] threshold5 = base_radius + 120;
+
     always @(*) begin
         rgb = 6'b000001; // NAVY_EDGE
 
-        if      (manhattan_distance <= base_radius + 1*24) rgb = 6'b101101; // MAGENTA_CORE
-        else if (manhattan_distance <= base_radius + 2*24) rgb = 6'b101100; // MAGENTA_GLOW
-        else if (manhattan_distance <= base_radius + 3*24) rgb = 6'b101000; // MAGENTA_INNER_RING
-        else if (manhattan_distance <= base_radius + 4*24) rgb = 6'b001100; // MAGENTA_OUTER_RING
-        else if (manhattan_distance <= base_radius + 5*24) rgb = 6'b001000; // BLUE_HALO
+        if      (manhattan_distance <= threshold1) rgb = 6'b101101; // MAGENTA_CORE
+        else if (manhattan_distance <= threshold2) rgb = 6'b101100; // MAGENTA_GLOW
+        else if (manhattan_distance <= threshold3) rgb = 6'b101000; // MAGENTA_INNER_RING
+        else if (manhattan_distance <= threshold4) rgb = 6'b001100; // MAGENTA_OUTER_RING
+        else if (manhattan_distance <= threshold5) rgb = 6'b001000; // BLUE_HALO
     end
 
 endmodule

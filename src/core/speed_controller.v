@@ -13,7 +13,7 @@ module speed_controller (
     // Pass through speed value (1-6) as step_size.
     // For invalid speeds, default to 1.
     always @(*) begin
-        step_size = ((speed >= 1) && (speed <= 6)) ? speed : 1;
+        step_size = (speed == 0 || speed == 7) ? 1 : speed;
     end
 
     always @(posedge clk or posedge rst) begin

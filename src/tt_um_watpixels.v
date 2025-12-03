@@ -108,8 +108,10 @@ module tt_um_watpixels (
 
   // Blend overlays with pattern, overlays take priority when not transparent
   // Gate pattern output with active (overlays handle active internally)
-  assign final_rgb = (waterloo_rgb != COLOR_TRANSPARENT) ? waterloo_rgb :
-                     ((emblem_rgb != COLOR_TRANSPARENT) ? emblem_rgb :
+  wire waterloo_active = (waterloo_rgb != COLOR_TRANSPARENT);
+  wire emblem_active = (emblem_rgb != COLOR_TRANSPARENT);
+  assign final_rgb = waterloo_active ? waterloo_rgb :
+                     (emblem_active ? emblem_rgb :
                      (active ? pattern_rgb : 6'b000000));
 
   // Output Signal Mapping
