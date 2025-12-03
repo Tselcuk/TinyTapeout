@@ -1,4 +1,4 @@
-// Checkerboard pattern; advances with a fixed-point step provided by speed_controller.
+// Checkerboard pattern; advances with a step size provided by speed_controller.
 module checkerboard_gen (
     input wire clk,
     input wire rst,
@@ -8,25 +8,23 @@ module checkerboard_gen (
     input wire [2:0] step_size,
     output reg [5:0] rgb
 );
-    reg [7:0] frame_offset;
-    reg [1:0] subpixel_accum;
-
-    wire [2:0] frac_sum = {1'b0, subpixel_accum} + {1'b0, step_size[1:0]};
+    reg [6:0] frame_accum;  // Accumulator to slow down animation (divides speed by 2)
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            frame_offset <= 0;
-            subpixel_accum <= 0;
+            frame_accum <= 0;
         end else if (next_frame) begin
-            frame_offset <= frame_offset + {5'b0, step_size[2], 1'b0} + {5'b0, frac_sum[2], 1'b0};
-            subpixel_accum <= frac_sum[1:0];
+            frame_accum <= frame_accum + {4'b0, step_size};
         end
     end
 
+    // Slows down the animation by 2x since we divide by 2 (ignore lowest 1 bit)
+    wire [5:0] frame_offset = frame_accum[6:1];
+
     // Rational: We only use shifted_x_low[5] (the MSB), not shifted_x_low[4:0]. However, we need to compute
-    // the full addition using frame_offset[4:0] to get the correct carry into bit 5.
+    // the full addition to correctly compute shifted_x_low[5]
     /* verilator lint_off UNUSEDSIGNAL */
-    wire [5:0] shifted_x_low = x + {frame_offset[4:0], 1'b0}; // This shifts the x coordinate by the frame offset
+    wire [5:0] shifted_x_low = x + frame_offset; // This shifts the x coordinate by the frame offset
     /* verilator lint_on UNUSEDSIGNAL */
     wire tile_select = shifted_x_low[5] ^ y_bit5; // This is the part that actually creates the checkerboard pattern
 
