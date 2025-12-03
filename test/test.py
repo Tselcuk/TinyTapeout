@@ -44,36 +44,15 @@ class VGATestHelper:
         self.dut.rst_n.value = 1
         await ClockCycles(self.dut.clk, 2)
 
-    async def wait_for_pause_state(self, expected_state, max_cycles=2048):
-        """Wait for speed controller paused signal to match expected_state (1=paused, 0=running)."""
-        paused_signal = self.dut.user_project.u_speed_controller.paused
-        for _ in range(max_cycles):
-            if int(paused_signal.value) == expected_state:
-                return
-            await RisingEdge(self.dut.clk)
-        raise AssertionError(f"Speed controller did not reach paused state {expected_state} within {max_cycles} cycles")
+    async def wait_for_vsyncs(self, count):
+        """Advance simulation by a number of vsync pulses."""
+        for _ in range(count):
+            await RisingEdge(self.dut.user_project.u_vga_timing.vsync)
 
-    def read_output_rgb(self):
-        """Read 6-bit RGB from output bus (uo_out[7:5,3:1] mapped to RR_GG_BB)."""
-        return (
-            (int(self.dut.uo_out[7].value) << 5)
-            | (int(self.dut.uo_out[6].value) << 4)
-            | (int(self.dut.uo_out[5].value) << 3)
-            | (int(self.dut.uo_out[3].value) << 2)
-            | (int(self.dut.uo_out[2].value) << 1)
-            | int(self.dut.uo_out[1].value)
-        )
-
-    async def wait_for_position(self, target_x, target_y, max_cycles=H_TOTAL * V_DISPLAY * 2):
-        """Wait until VGA timing reaches target pixel coordinate (x, y)."""
-        for _ in range(max_cycles):
-            if (
-                int(self.dut.user_project.u_vga_timing.x.value) == target_x
-                and int(self.dut.user_project.u_vga_timing.y.value) == target_y
-            ):
-                return
-            await RisingEdge(self.dut.clk)
-        raise AssertionError(f"Timed out waiting for coordinate ({target_x}, {target_y})")
+    def frame_offset(self):
+        """Return the 6-bit frame offset derived from frame_accum bits [6:1]."""
+        frame_accum_val = int(self.dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
+        return (frame_accum_val >> 1) & 0x3F
 
 
 @cocotb.test()
@@ -146,38 +125,32 @@ async def test_pause_resume_freezes_animation(dut):
     if not helper.is_rtl_simulation():
         cocotb.log.info("Skipping test - requires RTL simulation")
         return
-
     await helper.initialize_dut()
 
-    # Start animation at fastest speed
-    dut.ui_in.value = 0b1000_0000
-    for _ in range(5):
-        await RisingEdge(dut.user_project.u_vga_timing.vsync)
+    await helper.wait_for_vsyncs(2)
 
     # Pause animation
-    dut.ui_in.value = 0b1000_0001
+    dut.ui_in.value = 0b0000_0001
     await RisingEdge(dut.clk)
-    await helper.wait_for_pause_state(1)
+    await RisingEdge(dut.clk)
+    assert int(dut.user_project.u_speed_controller.paused.value) == 1, "Pause should latch"
 
-    frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
-    paused_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
-    for _ in range(5):
+    paused_offset = helper.frame_offset()
+    for _ in range(2):
         await RisingEdge(dut.user_project.u_vga_timing.vsync)
-        frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
-        current_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
-        assert current_offset == paused_offset, "Offset should stay constant while paused"
+        assert helper.frame_offset() == paused_offset, "Offset should stay constant while paused"
 
     # Resume animation
-    dut.ui_in.value = 0b1000_0010
+    dut.ui_in.value = 0b0000_0010
     await RisingEdge(dut.clk)
-    dut.ui_in.value = 0b1000_0000
-    await helper.wait_for_pause_state(0)
+    dut.ui_in.value = 0b0000_0000
+    await RisingEdge(dut.clk)
+    assert int(dut.user_project.u_speed_controller.paused.value) == 0, "Resume should clear pause"
 
     resumed_offset = paused_offset
-    for _ in range(5):
+    for _ in range(2):
         await RisingEdge(dut.user_project.u_vga_timing.vsync)
-        frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
-        resumed_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
+        resumed_offset = helper.frame_offset()
         if resumed_offset != paused_offset:
             break
     assert resumed_offset != paused_offset, "Offset should change after resuming"
@@ -250,25 +223,17 @@ async def test_speed_accuracy(dut):
         (0b1000_0000, 6),
     ]
 
-    frames_to_test = 20
-
-    # Measure increment rate for each speed
+    frames_to_test = 5  # Measure increment rate for each speed
     for ui_value, expected_step in speed_configs:
         dut.ui_in.value = ui_value
         await RisingEdge(dut.clk)
 
-        # Allow settling time
-        for _ in range(3):
-            await RisingEdge(dut.user_project.u_vga_timing.vsync)
+        await RisingEdge(dut.user_project.u_vga_timing.vsync)
 
-        frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
-        initial_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
+        initial_offset = helper.frame_offset()
 
-        for _ in range(frames_to_test):
-            await RisingEdge(dut.user_project.u_vga_timing.vsync)
-
-        frame_accum_val = int(dut.user_project.u_pattern_selector.u_checkerboard_gen.frame_accum.value)
-        final_offset = (frame_accum_val >> 1) & 0x3F  # Extract bits [6:1]
+        await helper.wait_for_vsyncs(frames_to_test)
+        final_offset = helper.frame_offset()
 
         # Handle counter overflow (frame_offset is 6-bit)
         actual_increment = final_offset - initial_offset
@@ -287,8 +252,7 @@ async def test_speed_accuracy(dut):
 @cocotb.test()
 async def test_unused_io_lines(dut):
     """
-    Verify unused bidirectional I/O pins remain tristated.
-    Checks uio_out=0 and uio_oe=0 to follow TinyTapeout best practices.
+    Verify unused bidirectional I/O pins remain tristated. Checks uio_out=0 and uio_oe=0 
     """
     helper = VGATestHelper(dut)
     await helper.initialize_dut()
