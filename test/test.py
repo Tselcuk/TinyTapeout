@@ -144,7 +144,7 @@ async def test_pause_resume_freezes_animation(dut):
     dut.ui_in.value = 0b1000_0010
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
-    dut.ui_in.value = 0b0000_0000
+    dut.ui_in.value = 0b1000_0000
     assert int(dut.user_project.u_speed_controller.paused.value) == 0, "Resume should clear pause"
 
     resumed_offset = paused_offset
