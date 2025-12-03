@@ -145,10 +145,10 @@ module emblem_gen(
                 6'd30: chevron_row = 96'h000FFC0000000001FF800000;
                 6'd31: chevron_row = 96'h001FF80000000000FFC00000;
                 6'd32: chevron_row = 96'h003FF000000000007FE00000;
-                6'd33: chevron_row = 96'h001FE000000000003FC00000;
-                6'd34: chevron_row = 96'h000FC000000000001F800000;
-                6'd35: chevron_row = 96'h000F8000000000000F800000;
-                6'd36: chevron_row = 96'h000F00000000000007800000;
+                6'd33: chevron_row = 96'h003FE000000000003FE00000;
+                6'd34: chevron_row = 96'h003FC000000000001FE00000;
+                6'd35: chevron_row = 96'h001F8000000000000FC00000;
+                6'd36: chevron_row = 96'h001F00000000000007C00000;
                 6'd37: chevron_row = 96'h000E00000000000003800000;
                 6'd38: chevron_row = 96'h000C00000000000001800000;
                 6'd39: chevron_row = 96'h000800000000000000800000;
@@ -204,14 +204,12 @@ module emblem_gen(
 
     always @(*) begin
         reg [6:0] half_width;
-        reg [6:0] border_inner;
         reg [9:0] abs_dx;
         reg [9:0] rel_y;
 
         abs_dx = (x >= 320) ? (x - 320) : (320 - x);
         rel_y = y - 144;
         half_width = shield_width(rel_y[7:0]);
-        border_inner = (half_width > 3) ? (half_width - 3) : 7'd0;
         rgb = COLOR_TRANSPARENT;
 
         if (active && y >= 144 && y < 320 && abs_dx <= {3'b0, half_width}) begin
@@ -219,8 +217,6 @@ module emblem_gen(
             if (is_chevron_white_pixel) rgb = COLOR_WHITE;
             if (is_chevron_black_pixel) rgb = COLOR_BLACK;
             if (is_lion_pixel) rgb = COLOR_RED;
-            // Border is either outer 3 pixels or top 3 rows
-            if (abs_dx > {3'b0, border_inner} || rel_y < 3) rgb = COLOR_BLACK;
         end
     end
 
