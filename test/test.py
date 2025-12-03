@@ -127,10 +127,10 @@ async def test_pause_resume_freezes_animation(dut):
         return
     await helper.initialize_dut()
 
-    await helper.wait_for_vsyncs(2)
+    dut.ui_in.value = 0b1000_0000
 
     # Pause animation
-    dut.ui_in.value = 0b0000_0001
+    dut.ui_in.value = 0b1000_0001
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     assert int(dut.user_project.u_speed_controller.paused.value) == 1, "Pause should latch"
@@ -141,10 +141,10 @@ async def test_pause_resume_freezes_animation(dut):
         assert helper.frame_offset() == paused_offset, "Offset should stay constant while paused"
 
     # Resume animation
-    dut.ui_in.value = 0b0000_0010
+    dut.ui_in.value = 0b1000_0010
+    await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
     dut.ui_in.value = 0b0000_0000
-    await RisingEdge(dut.clk)
     assert int(dut.user_project.u_speed_controller.paused.value) == 0, "Resume should clear pause"
 
     resumed_offset = paused_offset
