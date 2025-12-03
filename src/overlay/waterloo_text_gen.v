@@ -20,55 +20,49 @@ module waterloo_text_gen(
         input [2:0] row;
         begin
             case (pos)
-                4'd0: case (row) // W
-                    3'd3: get_char_bmp = 5'b10101;
-                    3'd4: get_char_bmp = 5'b10101;
-                    3'd5: get_char_bmp = 5'b11011;
+                0: case (row) // W
+                    3, 4: get_char_bmp = 5'b10101;
+                    5: get_char_bmp = 5'b11011;
                     default: get_char_bmp = 5'b10001;
                 endcase
-                4'd1: case (row) // A
-                    3'd0: get_char_bmp = 5'b01110;
-                    3'd3: get_char_bmp = 5'b11111;
+                1: case (row) // A
+                    0: get_char_bmp = 5'b01110;
+                    3: get_char_bmp = 5'b11111;
                     default: get_char_bmp = 5'b10001;
                 endcase
-                4'd2: case (row) // T
-                    3'd0: get_char_bmp = 5'b11111;
+                2: case (row) // T
+                    0: get_char_bmp = 5'b11111;
                     default: get_char_bmp = 5'b00100;
                 endcase
-                4'd3, 4'd9: case (row) // E
-                    3'd0: get_char_bmp = 5'b11111;
-                    3'd3: get_char_bmp = 5'b11110;
-                    3'd6: get_char_bmp = 5'b11111;
+                3, 9: case (row) // E
+                    0, 6: get_char_bmp = 5'b11111;
+                    3: get_char_bmp = 5'b11110;
                     default: get_char_bmp = 5'b10000;
                 endcase
-                4'd4: case (row) // R
-                    3'd0: get_char_bmp = 5'b11110;
-                    3'd3: get_char_bmp = 5'b11110;
-                    3'd4: get_char_bmp = 5'b10100;
-                    3'd5: get_char_bmp = 5'b10010;
+                4: case (row) // R
+                    0, 3: get_char_bmp = 5'b11110;
+                    4: get_char_bmp = 5'b10100;
+                    5: get_char_bmp = 5'b10010;
                     default: get_char_bmp = 5'b10001;
                 endcase
-                4'd5: case (row) // L
-                    3'd6: get_char_bmp = 5'b11111;
+                5: case (row) // L
+                    6: get_char_bmp = 5'b11111;
                     default: get_char_bmp = 5'b10000;
                 endcase
-                4'd6, 4'd7: case (row) // O
-                    3'd0: get_char_bmp = 5'b01110;
-                    3'd6: get_char_bmp = 5'b01110;
+                6, 7: case (row) // O
+                    0, 6: get_char_bmp = 5'b01110;
                     default: get_char_bmp = 5'b10001;
                 endcase
-                4'd10: case (row) // N
-                    3'd1: get_char_bmp = 5'b11001;
-                    3'd2: get_char_bmp = 5'b10101;
-                    3'd3: get_char_bmp = 5'b10101;
-                    3'd4: get_char_bmp = 5'b10011;
+                10: case (row) // N
+                    1: get_char_bmp = 5'b11001;
+                    2, 3: get_char_bmp = 5'b10101;
+                    4: get_char_bmp = 5'b10011;
                     default: get_char_bmp = 5'b10001;
                 endcase
-                4'd11: case (row) // G
-                    3'd0: get_char_bmp = 5'b01110;
-                    3'd2: get_char_bmp = 5'b10000;
-                    3'd3: get_char_bmp = 5'b10111;
-                    3'd6: get_char_bmp = 5'b01110;
+                11: case (row) // G
+                    0, 6: get_char_bmp = 5'b01110;
+                    2: get_char_bmp = 5'b10000;
+                    3: get_char_bmp = 5'b10111;
                     default: get_char_bmp = 5'b10001;
                 endcase
                 default: get_char_bmp = 5'b00000; // Represents a space
