@@ -18,13 +18,10 @@ module checkerboard_gen (
         end
     end
 
-    // Slows down the animation by 2x since we divide by 2 (ignore lowest 1 bit)
-    wire [5:0] frame_offset = frame_accum[6:1];
-
     // Rational: We only use shifted_x_low[5] (the MSB), not shifted_x_low[4:0]. However, we need to compute
     // the full addition to correctly compute shifted_x_low[5]
     /* verilator lint_off UNUSEDSIGNAL */
-    wire [5:0] shifted_x_low = x + frame_offset; // This shifts the x coordinate by the frame offset
+    wire [5:0] shifted_x_low = x + frame_accum[6:1]; // This shifts the x coordinate
     /* verilator lint_on UNUSEDSIGNAL */
     wire tile_select = shifted_x_low[5] ^ y_bit5; // This is the part that actually creates the checkerboard pattern
 
