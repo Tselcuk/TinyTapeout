@@ -6,11 +6,8 @@
 #include <verilated.h>
 #include <Vtt_um_watpixels.h>
 
+// Configurable parameters
 struct Config {
-    static constexpr int H_VISIBLE = 640;
-    static constexpr int V_VISIBLE = 480;
-    static constexpr int H_TOTAL = 800;
-    static constexpr int V_TOTAL = 525;
     static constexpr int FRAMES = 1000;
     static constexpr int MODE = 2;
 };
@@ -27,7 +24,7 @@ uint8_t compute_ui(int mode, bool force_resume) {
 }
 
 bool write_frame(const std::vector<uint8_t>& data) {
-    std::cout << "P6\n" << Config::H_VISIBLE << " " << Config::V_VISIBLE << "\n255\n";
+    std::cout << "P6\n640 480\n255\n";
     std::cout.write(reinterpret_cast<const char*>(data.data()), data.size());
     return std::cout.good();
 }
@@ -43,10 +40,10 @@ void tick(Vtt_um_watpixels& dut, int count) {
 
 void advance_coords(int& x, int& y) {
     x++;
-    if (x == Config::H_TOTAL) {
+    if (x == 800) {
         x = 0;
         y++;
-        if (y == Config::V_TOTAL) {
+        if (y == 525) {
             y = 0;
         }
     }
@@ -92,14 +89,14 @@ int main() {
 
     int pixel_x = 0;
     int pixel_y = 0;
-    const int cycles_per_frame = Config::H_TOTAL * Config::V_TOTAL;
-    const size_t framebuffer_size = static_cast<size_t>(Config::H_VISIBLE) * Config::V_VISIBLE * 3u;
+    const int cycles_per_frame = 800 * 525;
+    const size_t framebuffer_size = static_cast<size_t>(640) * 480 * 3u;
     std::vector<uint8_t> framebuffer(framebuffer_size);
 
     for (int frame_index = 0; frame_index < Config::FRAMES; frame_index++) {
         size_t write_index = 0;
         for (int cycle = 0; cycle < cycles_per_frame; cycle++) {
-            if (pixel_x < Config::H_VISIBLE && pixel_y < Config::V_VISIBLE) {
+            if (pixel_x < 640 && pixel_y < 480) {
                 uint8_t uo = dut.uo_out;
                 framebuffer[write_index++] = extract_color(uo, "red");
                 framebuffer[write_index++] = extract_color(uo, "green");
