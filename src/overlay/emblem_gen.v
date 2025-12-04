@@ -11,17 +11,18 @@ module emblem_gen(
     localparam [5:0] COLOR_RED = 6'b100100;
     localparam [5:0] COLOR_WHITE = 6'b111111;
 
-    // Chevron parameters (original bitmap: 85x100, scaled 2x for display)
+    // Positional constants for the chevron (this is where the very top of the chevron is)
     localparam [9:0] CHEV_X = 235;
     localparam [9:0] CHEV_Y = 200;
 
+    // Positional constants for the lion
     localparam [9:0] LION_W = 48;
     localparam [9:0] LION_H = 45;
-    localparam [9:0] TOP_LION_Y = 160; // 144 + 16
-    localparam [9:0] BOT_LION_Y = 264; // 144 + 120
-    localparam [9:0] LEFT_LION_X = 260; // 320 - 80 + 20
-    localparam [9:0] RIGHT_LION_X = 332; // 320 + 80 - 20 - 48
-    localparam [9:0] CENTER_LION_X = 296; // 320 - 24
+    localparam [9:0] TOP_LION_Y = 160;
+    localparam [9:0] BOT_LION_Y = 264;
+    localparam [9:0] LEFT_LION_X = 260;
+    localparam [9:0] RIGHT_LION_X = 332;
+    localparam [9:0] CENTER_LION_X = 296;
 
     function automatic [47:0] lion_row;
         input [5:0] idx;

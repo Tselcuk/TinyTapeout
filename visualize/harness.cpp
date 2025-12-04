@@ -74,9 +74,9 @@ int main() {
     std::vector<std::tuple<int64_t, int, int>> events = {
         {0, 3, 1},           // Set ui_in[3] to 1 (speed_2) at start
         {126000000, 0, 1},   // Set ui_in[0] to 1 (pause) at 5 seconds
-        {126000001, 0, 0},   // Set ui_in[0] to 0 (clear pause) 1 cycle later
+        {126000001, 0, 0},   // Set ui_in[0] to 0 (clear pause) 1 cycle later (simulate a button press)
         {176400000, 1, 1},   // Set ui_in[1] to 1 (resume) at 7 seconds
-        {176400001, 1, 0},   // Set ui_in[1] to 0 (clear resume) 1 cycle later
+        {176400001, 1, 0},   // Set ui_in[1] to 0 (clear resume) 1 cycle later (simulate a button press)
         {252000000, 3, 0},   // Set ui_in[3] to 0 (clear speed_2) at 10 seconds
         {252000000, 5, 1},   // Set ui_in[5] to 1 (speed_4) at 10 seconds
     };
@@ -95,8 +95,8 @@ int main() {
     std::vector<uint8_t> framebuffer(framebuffer_size);
 
     int64_t total_cycles = 0;
-    uint8_t uin = 0;  // UI input state
-    size_t next_event_idx = 0;  // Index of next event to process
+    uint8_t uin = 0;
+    size_t next_event_idx = 0;
 
     for (int frame_index = 0; frame_index < FRAMES; frame_index++) {
         size_t write_index = 0;
