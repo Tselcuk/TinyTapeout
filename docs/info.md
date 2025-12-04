@@ -67,7 +67,7 @@ The test suite in test/test.py uses cocotb to validate the design functionality.
 ### Test Cases
 
 **test_vga_timing_generates_expected_syncs**
-Validates VGA timing generator produces correct hsync/vsync pulses. Verifies horizontal counter sweeps 0-799, hsync timing (96 pixels at position 656), active region (pixels 0-639), and vsync timing (2 lines at line 490).
+Validates VGA timing generator produces correct hsync/vsync pulses. Verifies horizontal counter sweeps 0-799, hsync timing (96 pixels at position 656), active region (pixels 0-639), and vsync timing.
 
 **test_pause_resume_freezes_animation**
 Verifies pause/resume controls freeze and unfreeze animation. Tests that pause stops frame_offset increments, offset stays constant while paused, and resume allows animation to continue from paused state.
@@ -79,7 +79,7 @@ Validates speed controller input decoding (ui_in[7:3] => step_size 1-6), priorit
 Validates animation rates by verifying frame_offset increments by exactly step_size/2 per frame for each speed (1-6). Tests the precise increment formula over 20 frames and handles 6-bit counter overflow.
 
 **test_unused_io_lines**
-Confirms unused bidirectional I/O pins remain tristated (uio_out = 0, uio_oe = 0) following TinyTapeout best practices.
+Confirms unused bidirectional I/O pins remain tristated (uio_out = 0, uio_oe = 0).
 
 ### How to test
 
@@ -103,7 +103,7 @@ This requires [Verilator](https://www.veripool.org/verilator/) and [FFmpeg](http
 Edit `harness.cpp` to customize the simulation:
 
 **Frame Count:**
-- `FRAMES`: Number of frames to simulate (default: 1000)
+- `FRAMES`: Number of frames to simulate
 
 **Input Events:**
 The `events` vector controls UI input changes during the animation. Each event is a tuple: `(cycle, bit, value)`
@@ -134,7 +134,9 @@ For hardware testing, connect to a VGA display (hsync, vsync, and RGB signals). 
 
 ## External hardware
 
-VGA display (640×480, 60Hz compatible)
+VGA display (640×480, 60Hz)
+Pushbuttons to interact with the pause/pause (`ui_in[0]` and `ui_in[1]` is designed to take in a pulse)
+Switches to interact with the various speeds (`ui_in[2-7]` is expected to be held)
 
 ## Authors
 
