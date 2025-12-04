@@ -96,9 +96,39 @@ cd visualize
 python viz.py
 ```
 
-This requires [Verilator](https://www.veripool.org/verilator/) and [FFmpeg](https://ffmpeg.org/). It generates `vga_output.mp4` showing the animated patterns. To customize, edit `harness.cpp`:
+This requires [Verilator](https://www.veripool.org/verilator/) and [FFmpeg](https://ffmpeg.org/). It generates `vga_output.mp4` showing the animated patterns.
+
+#### Customizing the Animation
+
+Edit `harness.cpp` to customize the simulation:
+
+**Frame Count:**
 - `FRAMES`: Number of frames to simulate (default: 1000)
-- `MODE`: Animation speed mode 1-6 (default: 2)
+
+**Input Events:**
+The `events` vector controls UI input changes during the animation. Each event is a tuple: `(cycle, bit, value)`
+
+- `cycle`: Absolute clock cycle number when the event triggers (25.2 MHz clock: 1 second = 25,200,000 cycles)
+- `bit`: Which `ui_in` bit to modify (0-7)
+- `value`: Set the bit to 0 or 1
+
+**Events MUST be sorted by cycle number.**
+
+Example events:
+```cpp
+std::vector<std::tuple<int64_t, int, int>> events = {
+    {0, 3, 1},           // Set ui_in[3] to 1 at start (speed_2 on)
+    {126000000, 0, 1},   // Set ui_in[0] to 1 at 5 seconds (pause)
+    {126000001, 0, 0},   // Set ui_in[0] to 0 at 5s + 1 cycle (clear pause)
+    {252000000, 5, 1},   // Set ui_in[5] to 1 at 10 seconds (speed_4 on)
+};
+```
+
+To create a "pulse" effect (set a bit for a few cycles then clear it), add two events:
+```cpp
+{126000000, 0, 1},   // Set ui_in[0] to 1
+{126000003, 0, 0},   // Clear ui_in[0] after 3 cycles
+```
 
 For hardware testing, connect to a VGA display (hsync, vsync, and RGB signals). The design requires a 25.2 MHz pixel clock. Use `ui_in[0]` to pause, `ui_in[1]` to resume, and `ui_in[2-7]` for speed control (higher = faster).
 

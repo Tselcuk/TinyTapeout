@@ -2,26 +2,12 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <tuple>
 #include <stdexcept>
 #include <verilated.h>
 #include <Vtt_um_watpixels.h>
 
-// Configurable parameters
-struct Config {
-    static constexpr int FRAMES = 1000;
-    static constexpr int MODE = 2;
-};
-
-uint8_t compute_ui(int mode, bool force_resume) {
-    uint8_t ui = 0;
-    if (mode >= 1 && mode <= 6) {
-        ui = (1u << (mode + 1));
-    }
-    if (force_resume) {
-        ui = ui | (1u << 1);
-    }
-    return ui;
-}
+constexpr int FRAMES = 1500;
 
 bool write_frame(const std::vector<uint8_t>& data) {
     std::cout << "P6\n640 480\n255\n";
@@ -79,8 +65,23 @@ int main() {
     Vtt_um_watpixels dut(&context);
     dut.clk = 0;
 
-    const uint8_t ui = compute_ui(Config::MODE, false);
-    dut.ui_in = ui;
+    // Events: (cycle, bit, value)
+    // - cycle: absolute clock cycle number when event triggers
+    // - bit: which ui_in bit to modify (0-7)
+    // - value: set bit to 0 or 1
+    // Clock frequency: 25.2 MHz (1 second = 25,200,000 cycles)
+    // Events MUST be sorted by cycle number
+    std::vector<std::tuple<int64_t, int, int>> events = {
+        {0, 3, 1},           // Set ui_in[3] to 1 (speed_2) at start
+        {126000000, 0, 1},   // Set ui_in[0] to 1 (pause) at 5 seconds
+        {126000001, 0, 0},   // Set ui_in[0] to 0 (clear pause) 1 cycle later
+        {176400000, 1, 1},   // Set ui_in[1] to 1 (resume) at 7 seconds
+        {176400001, 1, 0},   // Set ui_in[1] to 0 (clear resume) 1 cycle later
+        {252000000, 3, 0},   // Set ui_in[3] to 0 (clear speed_2) at 10 seconds
+        {252000000, 5, 1},   // Set ui_in[5] to 1 (speed_4) at 10 seconds
+    };
+
+    dut.ui_in = 0;
     
     dut.rst_n = 0;
     tick(dut, 2);
@@ -93,16 +94,42 @@ int main() {
     const size_t framebuffer_size = static_cast<size_t>(640) * 480 * 3u;
     std::vector<uint8_t> framebuffer(framebuffer_size);
 
-    for (int frame_index = 0; frame_index < Config::FRAMES; frame_index++) {
+    int64_t total_cycles = 0;
+    uint8_t uin = 0;  // UI input state
+    size_t next_event_idx = 0;  // Index of next event to process
+
+    for (int frame_index = 0; frame_index < FRAMES; frame_index++) {
         size_t write_index = 0;
         for (int cycle = 0; cycle < cycles_per_frame; cycle++) {
+            while (next_event_idx < events.size() && total_cycles == std::get<0>(events[next_event_idx])) {
+                int bit = std::get<1>(events[next_event_idx]);
+                int value = std::get<2>(events[next_event_idx]);
+                uint8_t bit_mask = 1u << bit;
+
+                // Update uin state
+                if (value == 1) {
+                    uin |= bit_mask;
+                } else {
+                    uin &= ~bit_mask;
+                }
+
+                next_event_idx++;
+            }
+
+            // Apply current uin state to hardware
+            dut.ui_in = uin;
+
             if (pixel_x < 640 && pixel_y < 480) {
                 uint8_t uo = dut.uo_out;
                 framebuffer[write_index++] = extract_color(uo, "red");
                 framebuffer[write_index++] = extract_color(uo, "green");
                 framebuffer[write_index++] = extract_color(uo, "blue");
             }
+            
+            // Execute one clock cycle
             tick(dut, 1);
+            total_cycles++;
+
             advance_coords(pixel_x, pixel_y);
             if (context.gotFinish()) {
                 std::cerr << "Simulation finished early." << std::endl;
