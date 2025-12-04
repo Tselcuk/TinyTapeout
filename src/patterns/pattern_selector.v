@@ -47,7 +47,7 @@ module pattern_selector (
             vsync_q <= vsync;
             pattern_wrap_pulse <= 0; // Default to 0, pulse for one cycle
 
-            if (vsync_rising) begin
+            if (animation_trigger) begin
                 if (frame_counter == FRAMES_PER_PATTERN - 1) begin
                     // Time to switch to next pattern
                     frame_counter <= 0;
