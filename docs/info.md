@@ -85,7 +85,9 @@ Confirms unused bidirectional I/O pins remain tristated (uio_out = 0, uio_oe = 0
 
 To run the test suite, use `cd test && make -B`.
 
-Alternitively, use GitHub Actions by pushing your changes to Github.
+Alternatively, use GitHub Actions by pushing your changes to GitHub.
+
+Also, ensure that when developing, to visualize the demoscene.
 
 ### Visualization
 
