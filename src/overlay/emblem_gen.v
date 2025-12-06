@@ -20,9 +20,12 @@ module emblem_gen(
     localparam [9:0] LION_H = 45;
     localparam [9:0] TOP_LION_Y = 160;
     localparam [9:0] BOT_LION_Y = 264;
-    localparam [9:0] LEFT_LION_X = 260;
-    localparam [9:0] RIGHT_LION_X = 332;
+    localparam [9:0] LEFT_LION_X = 255;
+    localparam [9:0] RIGHT_LION_X = 335; 
     localparam [9:0] CENTER_LION_X = 296;
+
+    // Shield border width
+    localparam [2:0] BORDER_WIDTH = 3'd2;
 
     function automatic [47:0] lion_row;
         input [5:0] idx;
@@ -205,19 +208,39 @@ module emblem_gen(
 
     always @(*) begin
         reg [6:0] half_width;
+        reg [6:0] top_half_width;
         reg [9:0] abs_dx;
         reg [9:0] rel_y;
+        reg [9:0] half_width_extended;
+        reg [9:0] border_limit;
+        reg [9:0] top_border_limit;
 
         abs_dx = (x >= 320) ? (x - 320) : (320 - x);
         rel_y = y - 144;
         half_width = shield_width(rel_y[7:0]);
+        top_half_width = shield_width(8'd0); // Shield width at the top
+        half_width_extended = {3'b0, half_width};
+        border_limit = half_width_extended + {7'b0, BORDER_WIDTH};
+        top_border_limit = {3'b0, top_half_width} + {7'b0, BORDER_WIDTH};
         rgb = COLOR_TRANSPARENT;
 
-        if (active && y >= 144 && y < 320 && abs_dx <= {3'b0, half_width}) begin
-            rgb = COLOR_GOLD;
-            if (is_chevron_white_pixel) rgb = COLOR_WHITE;
-            if (is_chevron_black_pixel) rgb = COLOR_BLACK;
-            if (is_lion_pixel) rgb = COLOR_RED;
+        // Check top border region (above shield)
+        if (active && y >= (144 - {7'b0, BORDER_WIDTH}) && y < 144 && abs_dx <= top_border_limit) begin
+            rgb = COLOR_BLACK;
+        end
+        // Check if pixel is within shield area (including side borders)
+        else if (active && y >= 144 && y < 320 && abs_dx <= border_limit) begin
+            // Check if pixel is inside shield (not in border)
+            if (abs_dx <= half_width_extended) begin
+                // Inside shield - render normally
+                rgb = COLOR_GOLD;
+                if (is_chevron_white_pixel) rgb = COLOR_WHITE;
+                if (is_chevron_black_pixel) rgb = COLOR_BLACK;
+                if (is_lion_pixel) rgb = COLOR_RED;
+            end else begin
+                // In side border region - render black
+                rgb = COLOR_BLACK;
+            end
         end
     end
 

@@ -7,7 +7,7 @@
 #include <verilated.h>
 #include <Vtt_um_watpixels.h>
 
-constexpr int FRAMES = 150;
+constexpr int FRAMES = 1500;
 
 bool write_frame(const std::vector<uint8_t>& data) {
     std::cout << "P6\n640 480\n255\n";
