@@ -210,7 +210,7 @@ module emblem_gen(
         reg [6:0] half_width;
         reg [6:0] top_half_width;
         reg [9:0] abs_dx;
-        reg [9:0] rel_y;
+        reg [7:0] rel_y;
         reg [9:0] half_width_extended;
         reg [9:0] border_limit;
         reg [9:0] top_border_limit;
